@@ -1,0 +1,9 @@
+pyvenv.cfg
+etc/
+Include/
+Lib/
+Scripts/
+share/
+asciis/
+fonts/
+imgs/
