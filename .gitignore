@@ -4,6 +4,7 @@ Include/
 Lib/
 Scripts/
 share/
-asciis/
+character_imgs/
 fonts/
 imgs/
+__pycache__/

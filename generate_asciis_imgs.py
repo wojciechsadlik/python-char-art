@@ -16,4 +16,4 @@ for a in asciis:
     img = Image.new(mode="1", size=(width, height), color=(1))
     img_d = ImageDraw.Draw(img)
     img_d.text((0,0), a[1], font=fnt, fill=(0))
-    img.save("asciis/CascadiaMono/" + str(a[0]) + ".bmp", format="BMP")
+    img.save("character_imgs/ascii/CascadiaMono/" + str(a[0]) + ".bmp", format="BMP")
