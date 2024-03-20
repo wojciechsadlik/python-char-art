@@ -2,3 +2,4 @@ jupyterlab
 Pillow
 numpy
 matplotlib
+ipywidgets
