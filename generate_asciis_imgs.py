@@ -3,7 +3,7 @@ import string
 
 asciis = list(filter(lambda a: a.isprintable(), string.printable))
 
-fnt = ImageFont.truetype("fonts/CascadiaMono.ttf", 20)
+fnt = ImageFont.truetype("fonts/CascadiaMono-Bold.ttf", 16)
 
 width, height = 0, 0
 for a in asciis:
@@ -13,7 +13,7 @@ for a in asciis:
 
 asciis = list(map(lambda a: (ord(a), a), asciis))
 for a in asciis:
-    img = Image.new(mode="1", size=(width, height), color=(1))
+    img = Image.new(mode="L", size=(width, height), color=(0))
     img_d = ImageDraw.Draw(img)
-    img_d.text((0,0), a[1], font=fnt, fill=(0))
-    img.save("character_imgs/ascii/CascadiaMono/" + str(a[0]) + ".bmp", format="BMP")
+    img_d.text((0,0), a[1], font=fnt, fill=(255))
+    img.save("character_imgs/ascii/CascadiaMono-Bold/" + str(a[0]) + ".bmp", format="BMP")
