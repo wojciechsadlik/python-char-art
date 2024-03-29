@@ -10,6 +10,22 @@ def quantize(img: Image.Image, img_colors: int) -> Image.Image:
     palette_img.putpalette(quantize_palette)
     return img.quantize(palette=palette_img)
 
+def quantize_grayscale(img: Image.Image, img_colors: int) -> Image.Image:
+    if (img.mode != "L"):
+        raise "wrong img mode"
+    if (img_colors <= 0):
+        raise "img_colors <= 0"
+
+    img_arr = np.array(img)
+    color_step = 256 // img_colors
+    palette = np.linspace(0, 255, img_colors)
+    for y in range(0, img_arr.shape[0]):
+        for x in range(0, img_arr.shape[1]):
+            img_arr[y][x] = palette[min(img_arr[y][x] // color_step, len(palette)-1)]
+    
+    return Image.frombytes("L", img_arr.shape, img_arr)
+
+
 def preprocess_img(img: Image.Image,
                    scale_factor=1,
                    contrast=1,
@@ -20,6 +36,6 @@ def preprocess_img(img: Image.Image,
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)
     img = Image.blend(img, ImageOps.equalize(img), eq)
-    img = quantize(img, quantize_colors)
+    img = quantize_grayscale(img, quantize_colors)
     img = img.convert("L")
     return img
