@@ -16,7 +16,7 @@ def preprocess_img(img: Image.Image,
                    brightness=1,
                    eq=0,
                    quantize_colors=255):
-    img = ImageOps.scale(img, scale_factor, Image.Resampling.BOX)
+    img = ImageOps.scale(img, scale_factor, Image.Resampling.HAMMING)
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)
     img = Image.blend(img, ImageOps.equalize(img), eq)
