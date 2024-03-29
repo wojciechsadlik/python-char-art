@@ -17,11 +17,11 @@ def quantize_grayscale(img: Image.Image, img_colors: int) -> Image.Image:
         raise "img_colors <= 0"
 
     img_arr = np.array(img)
-    color_step = 256 // img_colors
+    color_step = 256 / img_colors
     palette = np.linspace(0, 255, img_colors)
     for y in range(0, img_arr.shape[0]):
         for x in range(0, img_arr.shape[1]):
-            img_arr[y][x] = palette[min(img_arr[y][x] // color_step, len(palette)-1)]
+            img_arr[y][x] = palette[int(img_arr[y][x] / color_step)]
     
     return Image.frombytes("L", img_arr.shape, img_arr)
 
