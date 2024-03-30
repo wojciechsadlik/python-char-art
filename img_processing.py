@@ -1,6 +1,8 @@
 from PIL import Image, ImageOps, ImageEnhance
 import numpy as np
 
+DITHER_MODES = ["NONE", "BAYER", "JJN", "FS"]
+
 def generate_bayer_matrix(n):
     if n == 1:
         return np.array([[0]])
@@ -54,7 +56,6 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither: str = "NONE") 
     if (img_colors <= 0):
         raise "img_colors <= 0"
 
-    m = dither_bayer_m
     img_arr = np.array(img) / 255
     color_step = 1 / img_colors
     palette = np.linspace(0, 1, img_colors)
@@ -64,7 +65,7 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither: str = "NONE") 
             c = img_arr[y][x]
             c_new = c
             if (dither == "BAYER"):
-                c_new = apply_threshold_map(c, m, color_step, x, y)
+                c_new = apply_threshold_map(c, dither_bayer_m, color_step, x, y)
 
             c_new_idx = int(c_new / color_step)
             c_new_idx = min(len(palette) - 1, max(0, c_new_idx))
@@ -87,11 +88,12 @@ def preprocess_img(img: Image.Image,
                    contrast=1,
                    brightness=1,
                    eq=0,
-                   quantize_colors=255):
+                   quantize_colors=255,
+                   dither="NONE"):
     img = ImageOps.scale(img, scale_factor, Image.Resampling.HAMMING)
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)
     img = Image.blend(img, ImageOps.equalize(img), eq)
-    img = quantize_grayscale(img, quantize_colors, "FS")
+    img = quantize_grayscale(img, quantize_colors, dither)
     img = img.convert("L")
     return img
