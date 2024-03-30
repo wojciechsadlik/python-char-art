@@ -1,6 +1,6 @@
 import numpy as np
 
-default_ascii_palette = [' ', '.', ':', ';', '~', '+', 'o', 'X', 'D', 'N', 'Q', '@']
+default_ascii_palette = [' ', '.', ':', ';', '!', '+', 'o', '4', 'D', 'N', 'Q', '@']
 default_ascii_palette_v2 = [[' ', '.', ',', '_', '_', '_', '_', '_', '_'],
                             [' ', ':', '~', ';', 'u', 'u', 'u', 'u', 'u'],
                             [' ', ':', '+', 'v', 'o', 'e', 'y', 'a', 'a'],
