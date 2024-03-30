@@ -55,9 +55,9 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither: str = "NONE") 
         raise "img_colors <= 0"
 
     m = dither_bayer_m
-    img_arr = np.array(img)
-    color_step = 256 / img_colors
-    palette = np.linspace(0, 255, img_colors, dtype=np.int16)
+    img_arr = np.array(img) / 255
+    color_step = 1 / img_colors
+    palette = np.linspace(0, 1, img_colors)
 
     for y in range(0, img_arr.shape[0]):
         for x in range(0, img_arr.shape[1]):
@@ -78,6 +78,7 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither: str = "NONE") 
 
             img_arr[y][x] = c_new
     
+    img_arr = np.array(img_arr * 255, dtype=np.ubyte)
     return Image.frombytes("L", img_arr.shape, img_arr)
 
 
