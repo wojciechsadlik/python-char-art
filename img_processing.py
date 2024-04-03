@@ -1,7 +1,12 @@
 from PIL import Image, ImageOps, ImageEnhance
 import numpy as np
+from enum import Enum
 
-DITHER_MODES = ["NONE", "BAYER", "JJN", "FS"]
+class DITHER_MODES(Enum):
+    NONE = 1
+    BAYER = 2
+    JJN = 3
+    FS = 4
 
 def generate_bayer_matrix(n):
     if n == 1:
@@ -50,7 +55,7 @@ def apply_fs_error_diff(c, c_new, img_arr, x, y):
                 continue
             img_arr[y + k_y][x + k_x - 1] += c_err * fs_k[k_y][k_x]
 
-def quantize_grayscale(img: Image.Image, img_colors: int, dither: str = "NONE") -> Image.Image:
+def quantize_grayscale(img: Image.Image, img_colors: int, dither = DITHER_MODES.NONE) -> Image.Image:
     if (img.mode != "L"):
         raise "wrong img mode"
     if (img_colors <= 0):
@@ -64,17 +69,17 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither: str = "NONE") 
         for x in range(0, img_arr.shape[1]):
             c = img_arr[y][x]
             c_new = c
-            if (dither == "BAYER"):
+            if (dither == DITHER_MODES.BAYER):
                 c_new = apply_threshold_map(c, dither_bayer_m, color_step, x, y)
 
             c_new_idx = int(c_new / color_step)
             c_new_idx = min(len(palette) - 1, max(0, c_new_idx))
             c_new = palette[c_new_idx]
             
-            if (dither == "JJN"):
+            if (dither == DITHER_MODES.JJN):
                 apply_jjn_error_diff(c, c_new, img_arr, x, y)
             
-            if (dither == "FS"):
+            if (dither == DITHER_MODES.FS):
                 apply_fs_error_diff(c, c_new, img_arr, x, y)
 
             img_arr[y][x] = c_new
@@ -89,7 +94,7 @@ def preprocess_img(img: Image.Image,
                    brightness=1,
                    eq=0,
                    quantize_colors=255,
-                   dither="NONE"):
+                   dither=DITHER_MODES.NONE):
     img = ImageOps.scale(img, scale_factor, Image.Resampling.HAMMING)
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)
