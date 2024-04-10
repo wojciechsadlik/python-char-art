@@ -96,7 +96,7 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
         return palette_map
 
     img_arr = np.array(img_arr * 255, dtype=np.ubyte)
-    return Image.frombytes("L", img_arr.shape, img_arr)
+    return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
 
 
 def preprocess_img(img: Image.Image,
