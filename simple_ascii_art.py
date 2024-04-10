@@ -11,8 +11,8 @@ default_ascii_palette_v2 = [[' ', '.', ',', '_', '_', '_', '_', '_', '_'],
                             ['^', 'f', 'P', '9', '0', 'W', 'Q', 'Q', 'Q'],
                             ['^', 'f', 'P', 'M', '$', 'W', 'Q', 'Q', '@']]
 
-def img2ascii_arr(img_arr: np.ndarray, img_colors: int = 256, palette: list[str] = default_ascii_palette) -> list[list[str]]:
-    palette_interval = img_colors / len(palette)
+def img2ascii_arr(img_arr: np.ndarray, palette: list[str] = default_ascii_palette) -> list[list[str]]:
+    palette_interval = 256 / len(palette)
     ascii_arr = []
     for i in range(img_arr.shape[0]):
         ascii_arr.append([])
@@ -20,9 +20,9 @@ def img2ascii_arr(img_arr: np.ndarray, img_colors: int = 256, palette: list[str]
             ascii_arr[-1].append(palette[int(img_arr[i][j]//palette_interval)])
     return ascii_arr
 
-def img2ascii_arr_v2(img_arr: np.ndarray, img_colors: int = 256, palette: list[list[str]] = default_ascii_palette_v2) -> list[list[str]]:
-    palette_y_interval = img_colors / len(palette)
-    palette_x_interval = img_colors / len(palette[0])
+def img2ascii_arr_v2(img_arr: np.ndarray, palette: list[list[str]] = default_ascii_palette_v2) -> list[list[str]]:
+    palette_y_interval = 256 / len(palette)
+    palette_x_interval = 256 / len(palette[0])
     ascii_arr = []
     for y in range(1, img_arr.shape[0], 2):
         ascii_arr.append([])

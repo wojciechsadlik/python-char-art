@@ -55,15 +55,22 @@ def apply_fs_error_diff(c, c_new, img_arr, x, y):
                 continue
             img_arr[y + k_y][x + k_x - 1] += c_err * fs_k[k_y][k_x]
 
-def quantize_grayscale(img: Image.Image, img_colors: int, dither = DITHER_MODES.NONE) -> Image.Image:
+def quantize_grayscale(img: Image.Image, img_colors: int,
+                       dither=DITHER_MODES.NONE, return_palette_map=False,
+                       palette: np.ndarray=None) -> Image.Image | np.ndarray:
     if (img.mode != "L"):
-        raise "wrong img mode"
+        raise Exception("img mode should be \"L\"")
     if (img_colors <= 0):
-        raise "img_colors <= 0"
+        raise Exception("img_colors should be > 0")
+    if (palette and img_colors != len(palette)):
+        raise Exception("img_colors and length of palette should match")
+    
+    if (not palette):
+        palette = np.linspace(0, 1, img_colors)
 
     img_arr = np.array(img) / 255
     color_step = 1 / img_colors
-    palette = np.linspace(0, 1, img_colors)
+    palette_map = np.zeros(img_arr.shape)
 
     for y in range(0, img_arr.shape[0]):
         for x in range(0, img_arr.shape[1]):
@@ -74,6 +81,7 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither = DITHER_MODES.
 
             c_new_idx = int(c_new / color_step)
             c_new_idx = min(len(palette) - 1, max(0, c_new_idx))
+            palette_map[y][x] = c_new_idx
             c_new = palette[c_new_idx]
             
             if (dither == DITHER_MODES.JJN):
@@ -84,6 +92,9 @@ def quantize_grayscale(img: Image.Image, img_colors: int, dither = DITHER_MODES.
 
             img_arr[y][x] = c_new
     
+    if (return_palette_map):
+        return palette_map
+
     img_arr = np.array(img_arr * 255, dtype=np.ubyte)
     return Image.frombytes("L", img_arr.shape, img_arr)
 
