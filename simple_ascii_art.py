@@ -1,17 +1,8 @@
 import numpy as np
 from PIL import Image
 from img_processing import DITHER_MODES, quantize_grayscale
+from ascii_palettes import default_ascii_palette, default_ascii_palette_v2
 
-default_ascii_palette = [' ', '.', ':', ';', '!', '+', 'o', '4', 'D', 'N', 'Q', '@']
-default_ascii_palette_v2 = [[' ', '.', ',', '_', '_', '_', '_', '_', '_'],
-                            [' ', ':', '~', ';', 'u', 'u', 'u', 'u', 'u'],
-                            [' ', ':', '+', 'v', 'o', 'e', 'y', 'a', 'a'],
-                            ["'", '!', '>', 'c', 'k', 'p', 'q', 'g', 'g'],
-                            ['`', '!', '<', '\\', 'J', 'A', '&', '&', '&'],
-                            ['"', 'f', 'F', 'K', '2', 'G', 'd', 'd', 'd'],
-                            ['^', 'f', 'P', 'R', '5', '#', 'Q', 'Q', 'Q'],
-                            ['^', 'f', 'P', '9', '0', 'W', 'Q', 'Q', 'Q'],
-                            ['^', 'f', 'P', 'M', '$', 'W', 'Q', 'Q', '@']]
 
 def img2ascii_arr(img: Image.Image, dither=DITHER_MODES.NONE,
                   scale_vertically=True, palette: list[str] = default_ascii_palette) -> list[list[str]]:
