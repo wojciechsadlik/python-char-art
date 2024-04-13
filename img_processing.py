@@ -45,6 +45,16 @@ def apply_jjn_error_diff(c, c_new, img_arr, x, y):
                 continue
             img_arr[y + k_y][x + k_x - 2] += c_err * jjn_k[k_y][k_x]
 
+def apply_jjn_error_diff_v2(c, c_new, img_arr, x, y):
+    c_err = c - c_new
+    for k_y in range(0, jjn_k.shape[0]):
+        for k_x in range(0, jjn_k.shape[1]):
+            if (y + k_y * 2 >= img_arr.shape[0]):
+                continue
+            if (x + k_x - 2 >= img_arr.shape[1] or x + k_x - 2 < 0):
+                continue
+            img_arr[y + k_y * 2][x + k_x - 2] += c_err * jjn_k[k_y][k_x]
+
 def apply_fs_error_diff(c, c_new, img_arr, x, y):
     c_err = c - c_new
     for k_y in range(0, fs_k.shape[0]):
@@ -54,6 +64,16 @@ def apply_fs_error_diff(c, c_new, img_arr, x, y):
             if (x + k_x - 1 >= img_arr.shape[1] or x + k_x - 1 < 0):
                 continue
             img_arr[y + k_y][x + k_x - 1] += c_err * fs_k[k_y][k_x]
+
+def apply_fs_error_diff_v2(c, c_new, img_arr, x, y):
+    c_err = c - c_new
+    for k_y in range(0, fs_k.shape[0]):
+        for k_x in range(0, fs_k.shape[1]):
+            if (y + k_y * 2 >= img_arr.shape[0]):
+                continue
+            if (x + k_x - 1 >= img_arr.shape[1] or x + k_x - 1 < 0):
+                continue
+            img_arr[y + k_y * 2][x + k_x - 1] += c_err * fs_k[k_y][k_x]
 
 def quantize_grayscale(img: Image.Image, img_colors: int,
                        dither=DITHER_MODES.NONE, return_palette_map=False,
@@ -90,6 +110,62 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
             if (dither == DITHER_MODES.FS):
                 apply_fs_error_diff(c, c_new, img_arr, x, y)
 
+            img_arr[y][x] = c_new
+    
+    if (return_palette_map):
+        return palette_map
+
+    img_arr = np.array(img_arr * 255, dtype=np.ubyte)
+    return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
+
+def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
+                       dither=DITHER_MODES.NONE, return_palette_map=False,
+                       palette: np.ndarray=None) -> list[list[int, int]]:
+    if (img.mode != "L"):
+        raise Exception("img mode should be \"L\"")
+    if (img_colors[0] <= 0 or img_colors[1] <= 0):
+        raise Exception("img_colors should be > 0")
+    if (palette and img_colors != len(palette)):
+        raise Exception("img_colors and length of palette should match")
+    
+    if (not palette):
+        palette = np.full(img_colors, np.linspace(0, 1, img_colors[1]))
+
+    img_arr = np.array(img) / 255
+    color_step_0 = 1 / img_colors[0]
+    color_step_1 = 1 / img_colors[1]
+    palette_map = np.zeros(img_arr.shape)
+
+    for y in range(1, img_arr.shape[0], 2):
+        for x in range(0, img_arr.shape[1]):
+            c0 = img_arr[y-1][x]
+            c1 = img_arr[y][x]
+
+            c0_new = c0
+            c1_new = c1
+            if (dither == DITHER_MODES.BAYER):
+                c0_new = apply_threshold_map(c0, dither_bayer_m, color_step_0, x, y-1)
+                c1_new = apply_threshold_map(c1, dither_bayer_m, color_step_1, x, y)
+
+            c0_new_idx = int(c0_new / color_step_0)
+            c0_new_idx = min(len(palette) - 1, max(0, c0_new_idx))
+            palette_map[y-1][x] = c0_new_idx
+
+            c1_new_idx = int(c1_new / color_step_1)
+            c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
+            palette_map[y][x] = c1_new_idx
+
+            c_new = palette[c0_new_idx][c1_new_idx]
+            
+            if (dither == DITHER_MODES.JJN):
+                apply_jjn_error_diff_v2(c0, c_new, img_arr, x, y-1)
+                apply_jjn_error_diff_v2(c1, c_new, img_arr, x, y)
+            
+            if (dither == DITHER_MODES.FS):
+                apply_fs_error_diff_v2(c0, c_new, img_arr, x, y-1)
+                apply_fs_error_diff_v2(c1, c_new, img_arr, x, y)
+
+            img_arr[y-1][x] = c_new
             img_arr[y][x] = c_new
     
     if (return_palette_map):
