@@ -11,10 +11,6 @@ def img2ascii_arr(img: Image.Image, dither=DITHER_MODES.NONE,
     img_arr = quantize_grayscale(img.convert("L"), len(palette), dither, True)
     return img_arr2ascii_arr(img_arr, len(palette), palette)
 
-def img2ascii_arr_v2(img: Image.Image, palette: list[str] = default_ascii_palette_v2) -> list[list[str]]:
-    img_arr = np.array(img.convert("L"))
-    return img_arr2ascii_arr_v2(img_arr, palette=palette)
-
 def img_arr2ascii_arr(img_arr: np.ndarray, img_colors=256, palette: list[str] = default_ascii_palette) -> list[list[str]]:
     palette_interval = img_colors / len(palette)
     ascii_arr = []
@@ -23,6 +19,11 @@ def img_arr2ascii_arr(img_arr: np.ndarray, img_colors=256, palette: list[str] = 
         for j in range(img_arr.shape[1]):
             ascii_arr[-1].append(palette[int(img_arr[i][j]//palette_interval)])
     return ascii_arr
+
+
+def img2ascii_arr_v2(img: Image.Image, palette: list[str] = default_ascii_palette_v2) -> list[list[str]]:
+    img_arr = np.array(img.convert("L"))
+    return img_arr2ascii_arr_v2(img_arr, palette=palette)
 
 def img_arr2ascii_arr_v2(img_arr: np.ndarray, img_colors=256, palette: list[list[str]] = default_ascii_palette_v2) -> list[list[str]]:
     palette_y_interval = img_colors / len(palette)
