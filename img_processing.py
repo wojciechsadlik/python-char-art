@@ -129,7 +129,13 @@ def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
         raise Exception("img_colors and length of palette should match")
     
     if (not palette):
-        palette = np.full(img_colors, np.linspace(0, 1, img_colors[1]))
+        linspace_y = np.linspace(0, 1, img_colors[0])
+        linspace_x = np.linspace(0, 1, img_colors[1])
+        palette = np.full((img_colors[0], img_colors[1], 2), 0.0)
+        for y in range(0, img_colors[0]):
+            for x in range(0, img_colors[1]):
+                palette[y][x][0] = linspace_y[y]
+                palette[y][x][1] = linspace_x[x]
 
     img_arr = np.array(img) / 255
     color_step_0 = 1 / img_colors[0]
@@ -155,18 +161,19 @@ def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
             c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
             palette_map[y][x] = c1_new_idx
 
-            c_new = palette[c0_new_idx][c1_new_idx]
+            c0_new = palette[c0_new_idx][c1_new_idx][0]
+            c1_new = palette[c0_new_idx][c1_new_idx][1]
             
             if (dither == DITHER_MODES.JJN):
-                apply_jjn_error_diff_v2(c0, c_new, img_arr, x, y-1)
-                apply_jjn_error_diff_v2(c1, c_new, img_arr, x, y)
+                apply_jjn_error_diff_v2(c0, c0_new, img_arr, x, y-1)
+                apply_jjn_error_diff_v2(c1, c1_new, img_arr, x, y)
             
             if (dither == DITHER_MODES.FS):
-                apply_fs_error_diff_v2(c0, c_new, img_arr, x, y-1)
-                apply_fs_error_diff_v2(c1, c_new, img_arr, x, y)
+                apply_fs_error_diff_v2(c0, c0_new, img_arr, x, y-1)
+                apply_fs_error_diff_v2(c1, c1_new, img_arr, x, y)
 
-            img_arr[y-1][x] = c_new
-            img_arr[y][x] = c_new
+            img_arr[y-1][x] = c0_new
+            img_arr[y][x] = c1_new
     
     if (return_palette_map):
         return palette_map
