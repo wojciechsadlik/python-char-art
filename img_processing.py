@@ -82,10 +82,10 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
         raise Exception("img mode should be \"L\"")
     if (img_colors <= 0):
         raise Exception("img_colors should be > 0")
-    if (palette and img_colors != len(palette)):
+    if (palette is not None and img_colors != len(palette)):
         raise Exception("img_colors and length of palette should match")
     
-    if (not palette):
+    if (palette is None):
         palette = np.linspace(0, 1, img_colors)
 
     img_arr = np.array(img) / 255
@@ -125,10 +125,10 @@ def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
         raise Exception("img mode should be \"L\"")
     if (img_colors[0] <= 0 or img_colors[1] <= 0):
         raise Exception("img_colors should be > 0")
-    if (palette and img_colors != len(palette)):
-        raise Exception("img_colors and length of palette should match")
+    if (palette is not None and (img_colors[0] != palette.shape[0] or img_colors[1] != palette.shape[1] or palette.shape[2] < 2)):
+        raise Exception("palette should be of shape img_colors with two subfields per cell")
     
-    if (not palette):
+    if (palette is None):
         linspace_y = np.linspace(0, 1, img_colors[0])
         linspace_x = np.linspace(0, 1, img_colors[1])
         palette = np.full((img_colors[0], img_colors[1], 2), 0.0)
