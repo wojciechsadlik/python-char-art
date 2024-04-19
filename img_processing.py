@@ -31,6 +31,17 @@ fs_k = np.array([
     [3, 5, 1]
 ]) / 16
 
+jjn_k_v2 = np.array([
+    [0, 0, 0, 7, 5],
+    [3, 5, 7, 5, 3],
+    [1, 3, 5, 3, 1]
+]) / (2*48)
+
+fs_k_v2 = np.array([
+    [0, 0, 7],
+    [3, 5, 1]
+]) / (2*16)
+
 def apply_threshold_map(c, m, r, x, y):
     n = len(m)
     return c + r * m[x % n][y % n]
@@ -53,7 +64,7 @@ def apply_jjn_error_diff_v2(c, c_new, img_arr, x, y):
                 continue
             if (x + k_x - 2 >= img_arr.shape[1] or x + k_x - 2 < 0):
                 continue
-            img_arr[y + k_y * 2][x + k_x - 2] += c_err * jjn_k[k_y][k_x]
+            img_arr[y + k_y * 2][x + k_x - 2] += c_err * jjn_k_v2[k_y][k_x]
 
 def apply_fs_error_diff(c, c_new, img_arr, x, y):
     c_err = c - c_new
@@ -73,7 +84,7 @@ def apply_fs_error_diff_v2(c, c_new, img_arr, x, y):
                 continue
             if (x + k_x - 1 >= img_arr.shape[1] or x + k_x - 1 < 0):
                 continue
-            img_arr[y + k_y * 2][x + k_x - 1] += c_err * fs_k[k_y][k_x]
+            img_arr[y + k_y * 2][x + k_x - 1] += c_err * fs_k_v2[k_y][k_x]
 
 def quantize_grayscale(img: Image.Image, img_colors: int,
                        dither=DITHER_MODES.NONE, return_palette_map=False,
