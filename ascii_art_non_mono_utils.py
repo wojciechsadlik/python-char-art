@@ -40,9 +40,13 @@ def text_arr_to_palette_id_arr(text_arr, palette):
     return p_id_arr
 
 def evaluate_text_arr(text_arr, img, font):
-    text_img, text_draw = new_img_draw(img.size, int(np.mean(img)))
+    text_img, text_draw = new_img_draw(img.size)
+    bbox = text_draw.textbbox((0,0), ''.join(text_arr), font=font)
     text_draw.text((0,0), ''.join(text_arr), font=font, fill=255)
-    return -np.mean(ImageChops.difference(text_img, img))
+    cmp_bbox = (0, 0, bbox[2], img.size[1])
+    text_img = text_img.crop(cmp_bbox)
+    cmp_img = img.crop(cmp_bbox)
+    return -np.mean(ImageChops.difference(text_img, cmp_img))
 
 def evaluate_palette_id_arr(p_id_arr, palette, img, font):
     text_arr = palette_id_arr_to_text_arr(p_id_arr, palette)

@@ -73,10 +73,11 @@ def greedy_algorithm(img, palette, font):
     return text_arr
 
 
-def generate_line_population(line, palette, font, count):
+def generate_line_population(line, palette, font, count, include_greedy=True):
     population = []
-    population.append(text_arr_to_palette_id_arr(generate_greedy_line(line, palette, font), palette))
-    for _ in range(1, count):
+    if (include_greedy):
+        population.append(text_arr_to_palette_id_arr(generate_greedy_line(line, palette, font), palette))
+    for _ in range(len(population), count):
         population.append(text_arr_to_palette_id_arr(generate_random_line(line, palette, font), palette))
 
     align_population_lengths(population, len(palette))
@@ -86,27 +87,30 @@ def generate_line_population(line, palette, font, count):
     return population, fits
 
 
-def generate_harmony_line(line, palette, font, iterations=100, pop_count=10, mem_rate=0.8, pa_rate=0.3, bw=2):
+def lazy_generate_harmony_line(line, palette, font, pop_count=10, mem_rate=0.8, pa_rate=0.3, bw=2):
     population, fits = generate_line_population(line, palette, font, pop_count)
     el_len = len(population[0])
+    generation = 0
     
-    for i in range(iterations):
+    while True:
+        generation += 1
         new_harm = []
         while len(new_harm) < el_len:
             if (random.random() < mem_rate):
                 new_pitch = population[random.randrange(0, pop_count)][len(new_harm)]
                 if (random.random() < pa_rate):
-                    new_pitch += random.randint(-bw//2, bw//2)
+                    new_pitch += random.randint(-bw, bw) // 2
                     new_pitch = new_pitch % len(palette)
                 new_harm.append(new_pitch)
             else:
                 new_harm.append(random.randrange(0, len(palette)))
         
         insert_into_sorted_population(population, fits, new_harm, palette, line, font)
+        
+        if (generation % 1000 == 0):
+            print(generation, np.max(fits), np.mean(fits))
+        
+        yield population[0], fits[0]
 
-        if i % 1000 == 0:
-            print(min(fits), np.mean(fits))
-
-    return population, fits
             
 
