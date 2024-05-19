@@ -18,6 +18,7 @@ def generate_random_line(line, palette, font):
 
     return text_arr
 
+
 def lazy_random_search(img, palette, font):
     lines = split_lines(img, palette, font)
     best_diff = math.inf
@@ -36,10 +37,6 @@ def lazy_random_search(img, palette, font):
             best_diff = diff
         yield best_text_arr
         
-
-
-
-
 
 def generate_greedy_line(line, palette, font):
     line_size = line.size
@@ -67,5 +64,15 @@ def generate_greedy_line(line, palette, font):
         bbox = draw.textbbox((0,0), ''.join(text_arr), font=font)
         
     text_arr.pop()
+
+    return text_arr
+
+def greedy_algorithm(img, palette, font):
+    lines = split_lines(img, palette, font)
+    
+    text_arr = []
+    for l in lines:
+        l_text_arr = generate_greedy_line(l, palette, font)
+        text_arr.append(''.join(l_text_arr) + '\n')
 
     return text_arr
