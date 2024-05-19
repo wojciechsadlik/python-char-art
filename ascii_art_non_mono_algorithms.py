@@ -50,7 +50,7 @@ def generate_greedy_line(line, palette, font):
         draw.text((0,0), ''.join(text_arr), font=font, fill=255)
         best_c_diff = np.average(ImageChops.difference(line, bg_img))
         text_arr.pop()
-        clear_img(draw, line_size)
+        clear_img(bg_img, draw)
         for i in range(1, len(palette)):
             text_arr.append(palette[i])
             draw.text((0,0), ''.join(text_arr), font=font, fill=255)
@@ -59,7 +59,7 @@ def generate_greedy_line(line, palette, font):
                 best_c = palette[i]
                 best_c_diff = diff
             text_arr.pop()
-            clear_img(draw, line_size)
+            clear_img(bg_img, draw)
         text_arr.append(best_c)
         bbox = draw.textbbox((0,0), ''.join(text_arr), font=font)
         

@@ -5,8 +5,8 @@ def new_img_draw(size, fill=0):
     draw = ImageDraw.Draw(img)
     return img, draw
 
-def clear_img(draw, size, fill=0):
-    draw.rectangle(((0,0), size), fill=fill)
+def clear_img(img, draw, fill=0):
+    draw.rectangle(((0,0), img.size), fill=fill)
 
 def split_lines(img, palette, font):
     _, draw = new_img_draw(img.size)
