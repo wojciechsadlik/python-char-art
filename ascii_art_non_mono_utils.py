@@ -33,6 +33,6 @@ def palette_ids_to_text_arr(p_id_arr, palette):
     return text_arr
 
 def evaluate_text_arr(text_arr, img, font):
-    text_img, text_draw = new_img_draw(img.size)
+    text_img, text_draw = new_img_draw(img.size, int(np.mean(img)))
     text_draw.text((0,0), ''.join(text_arr), font=font, fill=255)
-    return np.average(ImageChops.difference(text_img, img))
+    return np.mean(ImageChops.difference(text_img, img))
