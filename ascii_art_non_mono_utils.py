@@ -1,4 +1,5 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageChops
+import numpy as np
 
 def new_img_draw(size, fill=0):
     img = Image.new("L", size, fill)
@@ -24,3 +25,14 @@ def split_lines(img, palette, font):
     for i in range(len(text)):
         lines.append(img.crop((0, i * line_height, line_width, (i+1) * line_height)))
     return lines
+
+def palette_ids_to_text_arr(p_id_arr, palette):
+    text_arr = []
+    for id in p_id_arr:
+        text_arr.append(palette[id])
+    return text_arr
+
+def evaluate_text_arr(text_arr, img, font):
+    text_img, text_draw = new_img_draw(img.size)
+    text_draw.text((0,0), ''.join(text_arr), font=font, fill=255)
+    return np.average(ImageChops.difference(text_img, img))
