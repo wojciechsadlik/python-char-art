@@ -1,6 +1,8 @@
 import random
-from PIL import Image, ImageDraw, ImageChops
+from PIL import Image, ImageDraw, ImageChops, ImageFilter
 import numpy as np
+from IPython import display
+from skimage import metrics
 
 def new_img_draw(size, fill=0):
     img = Image.new("L", size, fill)
@@ -14,17 +16,17 @@ def split_lines(img, palette, font):
     _, draw = new_img_draw(img.size)
     text = []
     bbox = draw.textbbox((0,0), ''.join(text), font=font)
-    img_size = img.size
     lines = []
-    while bbox[3] < img_size[1]:
-        text.append(''.join(palette) + '\n')
-        bbox = draw.textbbox((0,0), ''.join(text), font=font)
-
+    
+    bbox = draw.textbbox((0,0), ''.join(palette), font=font)
+    
     line_width = img.size[0]
-    line_height = img.size[1] // len(text)
+    line_height = bbox[3]
     lines = []
-    for i in range(len(text)):
+    i = 0
+    while i * line_height < img.size[1]:
         lines.append(img.crop((0, i * line_height, line_width, (i+1) * line_height)))
+        i += 1
     return lines
 
 def palette_id_arr_to_text_arr(p_id_arr, palette):
@@ -39,14 +41,17 @@ def text_arr_to_palette_id_arr(text_arr, palette):
         p_id_arr.append(palette.index(c))
     return p_id_arr
 
+def draw_text_arr(img_draw, text_arr, font):
+    img_draw.multiline_text((0, 0), ''.join(text_arr), font=font, fill=255, spacing=1)
+
 def evaluate_text_arr(text_arr, img, font):
-    text_img, text_draw = new_img_draw(img.size)
-    bbox = text_draw.textbbox((0,0), ''.join(text_arr), font=font)
-    text_draw.text((0,0), ''.join(text_arr), font=font, fill=255)
-    cmp_bbox = (0, 0, bbox[2], img.size[1])
-    text_img = text_img.crop(cmp_bbox)
+    text_img, text_draw = new_img_draw(img.size, 0)
+    draw_text_arr(text_draw, text_arr, font)
+    cmp_bbox = (0, 0, img.size[0], img.size[1])
+    text_img = text_img.filter(ImageFilter.MaxFilter())
+    text_img = text_img.filter(ImageFilter.GaussianBlur(1))
     cmp_img = img.crop(cmp_bbox)
-    return -np.mean(ImageChops.difference(text_img, cmp_img))
+    return metrics.structural_similarity(np.array(text_img), np.array(cmp_img), win_size=7)
 
 def evaluate_palette_id_arr(p_id_arr, palette, img, font):
     text_arr = palette_id_arr_to_text_arr(p_id_arr, palette)
