@@ -80,7 +80,7 @@ def generate_line_population(line, palette, font, count, include_greedy=False):
     for _ in range(len(population), count):
         population.append(text_arr_to_palette_id_arr(generate_random_line(line, palette, font), palette))
 
-    align_population_lengths(population, len(palette))
+    align_population_lengths(population, calculate_longest_individual(line, palette, font), 0)
 
     population, fits = sort_population(population, palette, line, font)
 

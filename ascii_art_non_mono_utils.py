@@ -1,4 +1,5 @@
 import random
+import math
 from PIL import Image, ImageDraw, ImageChops, ImageFilter
 import numpy as np
 from IPython import display
@@ -47,11 +48,9 @@ def draw_text_arr(img_draw, text_arr, font):
 def evaluate_text_arr(text_arr, img, font):
     text_img, text_draw = new_img_draw(img.size, 0)
     draw_text_arr(text_draw, text_arr, font)
-    cmp_bbox = (0, 0, img.size[0], img.size[1])
     text_img = text_img.filter(ImageFilter.MaxFilter())
     text_img = text_img.filter(ImageFilter.GaussianBlur(1))
-    cmp_img = img.crop(cmp_bbox)
-    return metrics.structural_similarity(np.array(text_img), np.array(cmp_img), win_size=7)
+    return metrics.structural_similarity(np.array(text_img), np.array(img), win_size=7)
 
 def evaluate_palette_id_arr(p_id_arr, palette, img, font):
     text_arr = palette_id_arr_to_text_arr(p_id_arr, palette)
@@ -63,15 +62,10 @@ def evaluate_palette_id_population(population, palette, img, font):
         pop_fit.append(evaluate_palette_id_arr(el, palette, img, font))
     return pop_fit
 
-def align_population_lengths(population, palette_len):
-    max_len = len(population[0])
-    for i in range(1, len(population)):
-        if (len(population[i])) > max_len:
-            max_len = len(population[i])
-
+def align_population_lengths(population, length, fill_id):
     for i in range(len(population)):
-        while len(population[i]) < max_len:
-            population[i].append(random.randrange(0, palette_len))
+        while len(population[i]) < length:
+            population[i].append(fill_id)
 
 def sort_population(population, palette, img, font):
     fits = evaluate_palette_id_population(population, palette, img, font)
@@ -89,3 +83,13 @@ def insert_into_sorted_population(population, fits, new_el, palette, img, font):
             population.insert(i, new_el)
             population.pop()
             return
+        
+def calculate_longest_individual(img, palette, font):
+    img_draw = ImageDraw.Draw(img)
+    min_p_width = math.inf
+    for p in palette:
+        bbox = img_draw.textbbox((0,0), p, font=font)
+        if bbox[2] < min_p_width:
+            min_p_width = bbox[2]
+    
+    return math.ceil(img.size[0] / min_p_width)
