@@ -2,7 +2,6 @@ import random
 import math
 from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageOps
 import numpy as np
-from IPython import display
 from skimage import metrics
 
 def new_img_draw(size, fill=0):
