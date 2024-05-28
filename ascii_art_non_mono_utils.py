@@ -14,11 +14,7 @@ def clear_img(img, draw, fill=0):
     draw.rectangle(((0,0), img.size), fill=fill)
 
 def split_lines(img, palette, font):
-    _, draw = new_img_draw(img.size)
-    text = []
-    bbox = draw.textbbox((0,0), ''.join(text), font=font)
-    lines = []
-    
+    _, draw = new_img_draw(img.size)    
     bbox = draw.textbbox((0,0), ''.join(palette), font=font)
     
     line_width = img.size[0]
@@ -43,7 +39,7 @@ def text_arr_to_palette_id_arr(text_arr, palette):
     return p_id_arr
 
 def draw_text_arr(img_draw, text_arr, font):
-    img_draw.multiline_text((0, 0), ''.join(text_arr), font=font, fill=255, spacing=1)
+    img_draw.multiline_text((0, 0), ''.join(text_arr), font=font, fill=255)
 
 def evaluate_text_arr(text_arr, img, font):
     text_img, text_draw = new_img_draw(img.size, 0)
