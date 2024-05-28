@@ -1,6 +1,6 @@
 import random
 import math
-from PIL import Image, ImageDraw, ImageChops, ImageFilter
+from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageOps
 import numpy as np
 from IPython import display
 from skimage import metrics
@@ -48,8 +48,6 @@ def draw_text_arr(img_draw, text_arr, font):
 def evaluate_text_arr(text_arr, img, font):
     text_img, text_draw = new_img_draw(img.size, 0)
     draw_text_arr(text_draw, text_arr, font)
-    text_img = text_img.filter(ImageFilter.MaxFilter())
-    text_img = text_img.filter(ImageFilter.GaussianBlur(1))
     return metrics.structural_similarity(np.array(text_img), np.array(img), win_size=7)
 
 def evaluate_palette_id_arr(p_id_arr, palette, img, font):
