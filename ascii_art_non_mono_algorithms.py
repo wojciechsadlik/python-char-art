@@ -73,7 +73,7 @@ def greedy_algorithm(img, palette, font):
     return text_arr
 
 
-def generate_line_population(line, palette, font, count, include_greedy=True):
+def generate_line_population(line, palette, font, count, include_greedy=False):
     population = []
     if (include_greedy):
         population.append(text_arr_to_palette_id_arr(generate_greedy_line(line, palette, font), palette))
@@ -87,8 +87,8 @@ def generate_line_population(line, palette, font, count, include_greedy=True):
     return population, fits
 
 
-def lazy_generate_harmony_line(line, palette, font, pop_count=10, mem_rate=0.8, pa_rate=0.3, bw=2):
-    population, fits = generate_line_population(line, palette, font, pop_count)
+def lazy_generate_harmony_line(line, palette, font, pop_count=10, mem_rate=0.8, pa_rate=0.3, bw=2, include_greedy=False):
+    population, fits = generate_line_population(line, palette, font, pop_count, include_greedy)
     el_len = len(population[0])
     generation = 0
     
@@ -107,10 +107,19 @@ def lazy_generate_harmony_line(line, palette, font, pop_count=10, mem_rate=0.8, 
         
         insert_into_sorted_population(population, fits, new_harm, palette, line, font)
         
-        if (generation % 1000 == 0):
-            print(generation, np.max(fits), np.mean(fits))
-        
         yield population[0], fits[0]
 
-            
+def lazy_harmony_search(img, palette, font, pop_count=10, mem_rate=0.8, pa_rate=0.3, bw=2, include_greedy=False):
+    lines = split_lines(img, palette, font)
+    line_generators = []
+    for l in lines:
+        line_generators.append(lazy_generate_harmony_line(l, palette, font, pop_count, mem_rate, pa_rate, bw, include_greedy))
+
+    while True:
+        text_arr = []
+        for lg in line_generators:
+            l_p_ids, _ = next(lg)
+            l_text_arr = palette_id_arr_to_text_arr(l_p_ids, palette)
+            text_arr.append(''.join(l_text_arr) + '\n')
+        yield text_arr
 
