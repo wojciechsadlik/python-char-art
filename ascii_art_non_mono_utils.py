@@ -41,9 +41,9 @@ def draw_text_arr(img_draw, text_arr, font):
     img_draw.multiline_text((0, 0), ''.join(text_arr), font=font, fill=255)
 
 def evaluate_text_arr(text_arr, img, font):
-    text_img, text_draw = new_img_draw(img.size, 0)
+    text_img, text_draw = new_img_draw(img.size)
     draw_text_arr(text_draw, text_arr, font)
-    return metrics.structural_similarity(np.array(text_img), np.array(img), win_size=7)
+    return 1 - np.mean(ImageChops.difference(text_img, img))/255
 
 def evaluate_palette_id_arr(p_id_arr, palette, img, font):
     text_arr = palette_id_arr_to_text_arr(p_id_arr, palette)
