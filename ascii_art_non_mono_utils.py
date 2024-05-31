@@ -86,3 +86,17 @@ def calculate_longest_individual(img, palette, font):
             min_p_width = bbox[2]
     
     return math.ceil(img.size[0] / min_p_width)
+
+def find_end_of_line(text_arr, img, font):
+    _, text_draw = new_img_draw(img.size)
+    img_width = img.size[0]
+    left = 0
+    right = len(text_arr) - 1
+    while left < right:
+        mid = (left + right) // 2
+        bbox = text_draw.textbbox((0,0), ''.join(text_arr[0:mid]), font=font)
+        if bbox[2] >= img_width:
+            right = mid-1
+        else:
+            left = mid+1
+    return right
