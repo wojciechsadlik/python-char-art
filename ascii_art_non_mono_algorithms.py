@@ -164,3 +164,70 @@ def pool_harmony_search(img, palette, font, generations, pop_count=10, mem_rate=
         l_text_arr = starmap(palette_id_arr_to_text_arr, zip(l_p_ids, repeat(palette)))
         text_arr = list(l + '\n' for l in map(''.join, l_text_arr))
         yield text_arr
+
+
+def genetic_mutation(el, val_range, mutation_rate=0.3, mutation_bw=2):
+    for i in range(len(el)):
+        if (random.random() < mutation_rate):
+            el[i] = el[i] + random.randint(-mutation_bw, mutation_bw) // 2
+            el[i] = el[i] % val_range
+
+
+def new_genetic_line_population(palette, population, mutation_rate=0.3, mutation_bw=2):
+    el_len = len(population[0])
+    cross_point1 = el_len // 3
+    cross_point2 = 2 * cross_point1
+    new_population = []
+    while len(new_population) < len(population):
+        p1 = population[random.randrange(len(population))]
+        p2 = population[random.randrange(len(population))]
+        new1 = p1[0:cross_point1] + p2[cross_point1:cross_point2] + p1[cross_point2:]
+        new2 = p2[0:cross_point1] + p1[cross_point1:cross_point2] + p2[cross_point2:]
+        genetic_mutation(new1, len(palette), mutation_rate, mutation_bw)
+        genetic_mutation(new2, len(palette), mutation_rate, mutation_bw)
+
+        new_population.append(new1)
+        new_population.append(new2)
+
+    return new_population        
+
+
+class GeneticLineSearch:
+    def __init__(self, line, palette, font, pop_count, mutation_rate=0.3, mutation_bw=2, include_greedy=False):
+        self.line = line
+        self.palette = palette
+        self.font = font
+        self.mutation_rate = mutation_rate
+        self.mutation_bw = mutation_bw
+        self.pop_count = pop_count
+        self.population, self.fits = generate_line_population(line, palette, font, pop_count, include_greedy)
+        self.generation = 0
+
+    def next_line(self, incr):
+        self.generation += incr
+        for _ in range(incr):
+            new_population = new_genetic_line_population(self.palette, self.population, self.mutation_rate, self.mutation_bw)
+            for el in new_population:
+                insert_into_sorted_population(self.population, self.fits, el, self.palette, self.line, self.font)
+                self.population = self.population[:self.pop_count]
+        return vars(self)
+    
+    def get_solution(self):
+        return self.population[0]
+
+
+def pool_genetic_search(img, palette, font, generations, pop_count=10, mutation_rate=0.3, mutation_bw=2, include_greedy=False):
+    lines = split_lines(img, palette, font)
+    line_finders = []
+    for l in lines:
+        line_finders.append(GeneticLineSearch(l, palette, font, pop_count, mutation_rate, mutation_bw, include_greedy))
+
+    while True:
+        with Pool(USE_CPU) as p:
+            next_states = p.starmap(GeneticLineSearch.next_line, zip(line_finders, repeat(generations)))
+        for f, s in zip(line_finders, next_states):
+            f.__dict__.update(s)
+        l_p_ids = map(GeneticLineSearch.get_solution, line_finders)
+        l_text_arr = starmap(palette_id_arr_to_text_arr, zip(l_p_ids, repeat(palette)))
+        text_arr = list(l + '\n' for l in map(''.join, l_text_arr))
+        yield text_arr
