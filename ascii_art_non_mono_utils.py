@@ -20,7 +20,7 @@ def split_lines(img, palette, font):
     line_height = bbox[3]
     lines = []
     i = 0
-    while i * line_height < img.size[1]:
+    while img.size[1] - i * line_height > line_height//2:
         lines.append(img.crop((0, i * line_height, line_width, (i+1) * line_height)))
         i += 1
     return lines
