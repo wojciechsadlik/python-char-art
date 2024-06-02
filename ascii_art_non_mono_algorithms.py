@@ -178,11 +178,15 @@ def new_genetic_line_population(palette, population, mutation_rate=0.3, mutation
     cross_point1 = el_len // 3
     cross_point2 = 2 * cross_point1
     new_population = []
-    while len(new_population) < len(population):
-        p1 = population[random.randrange(len(population))]
-        p2 = population[random.randrange(len(population))]
+    i_ps = list(range(len(population)))
+    random.shuffle(i_ps)
+    while len(i_ps) > 0:
+        p1 = population[i_ps.pop()]
+        p2 = population[i_ps.pop()]
+
         new1 = p1[0:cross_point1] + p2[cross_point1:cross_point2] + p1[cross_point2:]
         new2 = p2[0:cross_point1] + p1[cross_point1:cross_point2] + p2[cross_point2:]
+
         genetic_mutation(new1, len(palette), mutation_rate, mutation_bw)
         genetic_mutation(new2, len(palette), mutation_rate, mutation_bw)
 
