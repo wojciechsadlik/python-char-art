@@ -55,10 +55,13 @@ def evaluate_palette_id_population(population, palette, img, font):
         pop_fit.append(evaluate_palette_id_arr(el, palette, img, font))
     return pop_fit
 
-def align_population_lengths(population, length, fill_id):
+def align_population_lengths(population, length, palette_length=1, fill_id=None):
     for i in range(len(population)):
         while len(population[i]) < length:
-            population[i].append(fill_id)
+            if fill_id != None:
+                population[i].append(fill_id)
+            else:
+                population[i].append(random.randrange(0, palette_length))
 
 def sort_population(population, palette, img, font):
     fits = evaluate_palette_id_population(population, palette, img, font)
