@@ -4,6 +4,8 @@ from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageOps
 import numpy as np
 from skimage import metrics
 
+SPACING = 2
+
 def new_img_draw(size, fill=0):
     img = Image.new("L", size, fill)
     draw = ImageDraw.Draw(img)
@@ -12,17 +14,20 @@ def new_img_draw(size, fill=0):
 def clear_img(img, draw, fill=0):
     draw.rectangle(((0,0), img.size), fill=fill)
 
-def split_lines(img, palette, font):
+def split_lines(img, palette, font, spacing=SPACING):
     _, draw = new_img_draw(img.size)    
     bbox = draw.textbbox((0,0), ''.join(palette), font=font)
     
+    line_top_margin = bbox[1]
     line_width = img.size[0]
     line_height = bbox[3]
     lines = []
-    i = 0
-    while img.size[1] - i * line_height > line_height//2:
-        lines.append(img.crop((0, i * line_height, line_width, (i+1) * line_height)))
-        i += 1
+    top = 0
+    bottom = line_height
+    while img.size[1] - bottom > line_height//2:
+        lines.append(img.crop((0, top, line_width, bottom)))
+        top = bottom - line_top_margin + spacing
+        bottom = top + line_height
     return lines
 
 def palette_id_arr_to_text_arr(p_id_arr, palette):
@@ -37,8 +42,8 @@ def text_arr_to_palette_id_arr(text_arr, palette):
         p_id_arr.append(palette.index(c))
     return p_id_arr
 
-def draw_text_arr(img_draw, text_arr, font):
-    img_draw.multiline_text((0, 0), ''.join(text_arr), font=font, fill=255)
+def draw_text_arr(img_draw, text_arr, font, spacing=SPACING):
+    img_draw.multiline_text((0,0), ''.join(text_arr), font=font, fill=255, spacing=spacing)
 
 def evaluate_text_arr(text_arr, img, font):
     text_img, text_draw = new_img_draw(img.size)
