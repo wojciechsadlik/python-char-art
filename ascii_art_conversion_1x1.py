@@ -4,16 +4,16 @@ import random
 from img_processing import DITHER_MODES, quantize_grayscale
 
 
-def img2ascii_arr(img: Image.Image, palette, brightness_palette,
+def img2char_arr_1x1(img: Image.Image, palette, brightness_palette,
                   dither=DITHER_MODES.NONE, scale_vertically=True) -> list[list[str]]:
     if scale_vertically:
         img = img.resize((img.size[0], img.size[1]//2))
 
     img_arr = quantize_grayscale(img.convert("L"), len(palette), dither, True, brightness_palette)
     
-    return img_arr2ascii_arr(img_arr, palette, len(palette))
+    return img_arr2char_arr_1x1(img_arr, palette, len(palette))
 
-def img_arr2ascii_arr(img_arr: np.ndarray, palette: list[str], img_colors=256) -> list[list[str]]:
+def img_arr2char_arr_1x1(img_arr: np.ndarray, palette: list[str], img_colors=256) -> list[list[str]]:
     palette_interval = img_colors / len(palette)
     char_arr = []
     for i in range(img_arr.shape[0]):

@@ -3,7 +3,7 @@ from PIL import Image
 import random
 from img_processing import DITHER_MODES, apply_threshold_map, dither_bayer_m, apply_jjn_error_diff, apply_fs_error_diff
 
-def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
+def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
                        dither=DITHER_MODES.NONE, return_palette_map=False,
                        palette: np.ndarray=None) -> list[list[int, int]]:
     if (img.mode != "L"):
@@ -66,14 +66,14 @@ def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
     img_arr = np.array(img_arr * 255, dtype=np.ubyte)
     return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
 
-def img2ascii_arr_v2(img: Image.Image, palette: list[list[str]],
+def img2char_arr_1x2(img: Image.Image, palette: list[list[str]],
                      brightness_palette, dither=DITHER_MODES.NONE) -> list[list[str]]:
 
-    img_arr = quantize_grayscale_v2(img.convert("L"), (len(palette), len(palette[0])), dither, True, np.array(brightness_palette))
+    img_arr = quantize_grayscale_1x2(img.convert("L"), (len(palette), len(palette[0])), dither, True, np.array(brightness_palette))
 
-    return img_arr2ascii_arr_v2(img_arr, palette, (len(palette), len(palette[0])))
+    return img_arr2char_arr_1x2(img_arr, palette, (len(palette), len(palette[0])))
 
-def img_arr2ascii_arr_v2(img_arr: np.ndarray, palette: list[list[str]], img_colors=(256,256)) -> list[list[str]]:
+def img_arr2char_arr_1x2(img_arr: np.ndarray, palette: list[list[str]], img_colors=(256,256)) -> list[list[str]]:
     palette_y_interval = img_colors[0] / len(palette)
     palette_x_interval = img_colors[1] / len(palette[0])
     ascii_arr = []
