@@ -1,39 +1,7 @@
 import numpy as np
 from PIL import Image
 import random
-from img_processing import DITHER_MODES, apply_threshold_map, dither_bayer_m
-from ascii_palettes import ascii_palette_v2, ascii_brightness_v2
-
-jjn_k_v2 = np.array([
-    [0, 0, 0, 7, 5],
-    [3, 5, 7, 5, 3],
-    [1, 3, 5, 3, 1]
-]) / (2*48)
-
-fs_k_v2 = np.array([
-    [0, 0, 7],
-    [3, 5, 1]
-]) / (2*16)
-
-def apply_jjn_error_diff_v2(c, c_new, img_arr, x, y):
-    c_err = c - c_new
-    for k_y in range(0, jjn_k_v2.shape[0]):
-        for k_x in range(0, jjn_k_v2.shape[1]):
-            if (y + k_y * 2 >= img_arr.shape[0]):
-                continue
-            if (x + k_x - 2 >= img_arr.shape[1] or x + k_x - 2 < 0):
-                continue
-            img_arr[y + k_y * 2][x + k_x - 2] += c_err * jjn_k_v2[k_y][k_x]
-
-def apply_fs_error_diff_v2(c, c_new, img_arr, x, y):
-    c_err = c - c_new
-    for k_y in range(0, fs_k_v2.shape[0]):
-        for k_x in range(0, fs_k_v2.shape[1]):
-            if (y + k_y * 2 >= img_arr.shape[0]):
-                continue
-            if (x + k_x - 1 >= img_arr.shape[1] or x + k_x - 1 < 0):
-                continue
-            img_arr[y + k_y * 2][x + k_x - 1] += c_err * fs_k_v2[k_y][k_x]
+from img_processing import DITHER_MODES, apply_threshold_map, dither_bayer_m, apply_jjn_error_diff, apply_fs_error_diff
 
 def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
                        dither=DITHER_MODES.NONE, return_palette_map=False,
@@ -82,12 +50,12 @@ def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
             c1_new = palette[c0_new_idx][c1_new_idx][1]
             
             if (dither == DITHER_MODES.JJN):
-                apply_jjn_error_diff_v2(c0, c0_new, img_arr, x, y-1)
-                apply_jjn_error_diff_v2(c1, c1_new, img_arr, x, y)
+                apply_jjn_error_diff(c0, c0_new, img_arr, x, y-1)
+                apply_jjn_error_diff(c1, c1_new, img_arr, x, y)
             
             if (dither == DITHER_MODES.FS):
-                apply_fs_error_diff_v2(c0, c0_new, img_arr, x, y-1)
-                apply_fs_error_diff_v2(c1, c1_new, img_arr, x, y)
+                apply_fs_error_diff(c0, c0_new, img_arr, x, y-1)
+                apply_fs_error_diff(c1, c1_new, img_arr, x, y)
 
             img_arr[y-1][x] = c0_new
             img_arr[y][x] = c1_new
@@ -98,22 +66,14 @@ def quantize_grayscale_v2(img: Image.Image, img_colors: tuple[int, int],
     img_arr = np.array(img_arr * 255, dtype=np.ubyte)
     return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
 
+def img2ascii_arr_v2(img: Image.Image, palette: list[list[str]],
+                     brightness_palette, dither=DITHER_MODES.NONE) -> list[list[str]]:
 
-def img2ascii_arr_v2(img: Image.Image, palette: list[list[str]] = ascii_palette_v2,
-                     dither=DITHER_MODES.NONE, brightness_palette=ascii_brightness_v2) -> list[list[str]]:
-
-    for i in range(len(brightness_palette)):
-        for j in range(len(brightness_palette[i])):
-            brightness_palette[i][j] = (
-                brightness_palette[i][j][0] / brightness_palette[-1][-1][0],
-                brightness_palette[i][j][1] / brightness_palette[-1][-1][1]
-            )
-    
     img_arr = quantize_grayscale_v2(img.convert("L"), (len(palette), len(palette[0])), dither, True, np.array(brightness_palette))
 
-    return img_arr2ascii_arr_v2(img_arr, (len(palette), len(palette[0])), palette)
+    return img_arr2ascii_arr_v2(img_arr, palette, (len(palette), len(palette[0])))
 
-def img_arr2ascii_arr_v2(img_arr: np.ndarray, img_colors=(256,256), palette: list[list[str]] = ascii_palette_v2) -> list[list[str]]:
+def img_arr2ascii_arr_v2(img_arr: np.ndarray, palette: list[list[str]], img_colors=(256,256)) -> list[list[str]]:
     palette_y_interval = img_colors[0] / len(palette)
     palette_x_interval = img_colors[1] / len(palette[0])
     ascii_arr = []
@@ -124,5 +84,5 @@ def img_arr2ascii_arr_v2(img_arr: np.ndarray, img_colors=(256,256), palette: lis
             if (len(palette_cell) > 1):
                 ascii_arr[-1].append(palette_cell[random.randint(0, len(palette_cell)-1)])
             else:
-                ascii_arr[-1].append(palette_cell)
+                ascii_arr[-1].append(palette_cell[0])
     return ascii_arr

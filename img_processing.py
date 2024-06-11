@@ -106,7 +106,7 @@ def preprocess_img(img: Image.Image,
                    eq=0,
                    quantize_colors=255,
                    dither=DITHER_MODES.NONE):
-    img = ImageOps.scale(img, scale_factor, Image.Resampling.HAMMING)
+    img = ImageOps.scale(img, scale_factor, Image.Resampling.BICUBIC)
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)
     img = Image.blend(img, ImageOps.equalize(img), eq)

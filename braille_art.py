@@ -4,6 +4,15 @@ from img_processing import DITHER_MODES, quantize_grayscale
 
 BRAILLE_UNICODE_START=0x2800
 
+def get_braille_chars():
+    braille_unicode_start = BRAILLE_UNICODE_START
+    braille_unicode_end = 0x28FF
+
+    chars = []
+    for c in range(braille_unicode_start, braille_unicode_end+1):
+        chars.append(chr(c))
+    return chars
+
 def img2braille_arr(img: Image.Image, dither=DITHER_MODES.NONE) -> list[list[str]]:
     img_arr = quantize_grayscale(img.convert("L"), 2, dither, True)
     return img_arr2braille_arr(img_arr, img_colors=2)
