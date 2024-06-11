@@ -35,7 +35,7 @@ def generate_brightness_map(char_set, font, window_size, bg_color=0, char_color=
     for char in char_set:
         img = Image.new(mode="L", size=(width, height), color=bg_color)
         img_d = ImageDraw.Draw(img)
-        img_d.text((0,0), char, font=font, fill=char_color)
+        img_d.text((width,height), char, font=font, fill=char_color, anchor='rd')
         res_img = img.resize(window_size)
         brightnesses.append(np.array(res_img)/255)
 
