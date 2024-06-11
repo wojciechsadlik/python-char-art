@@ -51,10 +51,20 @@ def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
             
             if (dither == DITHER_MODES.JJN):
                 apply_jjn_error_diff(c0, c0_new, img_arr, x, y-1)
+                c1_new = img_arr[y][x]
+                c1_new_idx = int(c1_new / color_step_1)
+                c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
+                palette_map[y][x] = c1_new_idx
+                c1_new = palette[c0_new_idx][c1_new_idx][1]
                 apply_jjn_error_diff(c1, c1_new, img_arr, x, y)
             
             if (dither == DITHER_MODES.FS):
                 apply_fs_error_diff(c0, c0_new, img_arr, x, y-1)
+                c1_new = img_arr[y][x]
+                c1_new_idx = int(c1_new / color_step_1)
+                c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
+                palette_map[y][x] = c1_new_idx
+                c1_new = palette[c0_new_idx][c1_new_idx][1]
                 apply_fs_error_diff(c1, c1_new, img_arr, x, y)
 
             img_arr[y-1][x] = c0_new
