@@ -36,6 +36,18 @@ def apply_threshold_map(c, m, r, x, y):
     n = len(m)
     return c + r * m[x % n][y % n]
 
+def estimate_jjn_error_diff(c, c_new, img_arr, x, y):
+    c_err = c - c_new
+    cumulative_error = 0
+    for k_y in range(0, jjn_k.shape[0]):
+        for k_x in range(0, jjn_k.shape[1]):
+            if (y + k_y >= img_arr.shape[0]):
+                continue
+            if (x + k_x - 2 >= img_arr.shape[1] or x + k_x - 2 < 0):
+                continue
+            cumulative_error += c_err * jjn_k[k_y][k_x]
+    return cumulative_error
+
 def apply_jjn_error_diff(c, c_new, img_arr, x, y):
     c_err = c - c_new
     for k_y in range(0, jjn_k.shape[0]):
