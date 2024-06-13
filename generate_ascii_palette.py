@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 import string
 import numpy as np
 
@@ -36,7 +36,7 @@ def generate_brightness_map(char_set, font, window_size, bg_color=0, char_color=
         img = Image.new(mode="L", size=(width, height), color=bg_color)
         img_d = ImageDraw.Draw(img)
         img_d.text((width,height), char, font=font, fill=char_color, anchor='rd')
-        res_img = img.resize(window_size)
+        res_img = img.resize(window_size, Image.Resampling.BOX)
         brightnesses.append(np.array(res_img)/255)
 
     if normalize:
