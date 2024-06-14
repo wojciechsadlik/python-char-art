@@ -31,16 +31,6 @@ def find_match(win, char_to_brightness_map, dither=DITHER_MODES.NONE, allow_err=
     close_char = []
     close_br = []
     for char, br in char_to_brightness_map.items():
-        # if (dither==DITHER_MODES.JJN):
-        #     win_cp = np.copy(win)
-        #     for w_y in range(br.shape[0]):
-        #         for w_x in range(br.shape[1]):
-        #             apply_error_diff(br[w_y][w_x], win_cp, w_x, w_y, jjn_k, 2)
-        # if (dither==DITHER_MODES.FS):
-        #     win_cp = np.copy(win)
-        #     for w_y in range(br.shape[0]):
-        #         for w_x in range(br.shape[1]):
-        #             apply_error_diff(br[w_y][w_x], win_cp, w_x, w_y, fs_k, 1)
         dist = np.linalg.norm(win-br)
 
         if dist < min_dist:
