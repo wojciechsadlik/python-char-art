@@ -36,37 +36,46 @@ def apply_threshold_map(c, m, r, x, y):
     n = len(m)
     return c + r * m[x % n][y % n]
 
-def estimate_jjn_error_diff(c, c_new, img_arr, x, y):
+def apply_error_diff(c_new, img_arr, x, y, kernel, kernel_off_x):
+    c = img_arr[y][x]
     c_err = c - c_new
-    cumulative_error = 0
-    for k_y in range(0, jjn_k.shape[0]):
-        for k_x in range(0, jjn_k.shape[1]):
-            if (y + k_y >= img_arr.shape[0]):
-                continue
-            if (x + k_x - 2 >= img_arr.shape[1] or x + k_x - 2 < 0):
-                continue
-            cumulative_error += c_err * jjn_k[k_y][k_x]
-    return cumulative_error
+    c_err_kernel = c_err * kernel
+    x_left = x - kernel_off_x
+    if x_left < 0:
+        c_err_kernel = c_err_kernel[:,-x_left:]
+        x_left = 0
+    x_right = x_left + c_err_kernel.shape[1]
+    if x_right > img_arr.shape[1]:
+        c_err_kernel = c_err_kernel[:,:c_err_kernel.shape[1]-(x_right-img_arr.shape[1])]
+        x_right = img_arr.shape[1]
+    top = y
+    bottom = y + c_err_kernel.shape[0]
+    if bottom > img_arr.shape[0]:
+        c_err_kernel = c_err_kernel[:c_err_kernel.shape[0]-(bottom-img_arr.shape[0]),:]
+        bottom = img_arr.shape[0]
+    img_arr[top:bottom, x_left:x_right] += c_err_kernel
 
-def apply_jjn_error_diff(c, c_new, img_arr, x, y):
-    c_err = c - c_new
-    for k_y in range(0, jjn_k.shape[0]):
-        for k_x in range(0, jjn_k.shape[1]):
-            if (y + k_y >= img_arr.shape[0]):
-                continue
-            if (x + k_x - 2 >= img_arr.shape[1] or x + k_x - 2 < 0):
-                continue
-            img_arr[y + k_y][x + k_x - 2] += c_err * jjn_k[k_y][k_x]
+def apply_error_diff_window(c_new, c_width, c_height, img_arr, x, y, kernel, kernel_off_x):
+    c = img_arr[y:c_height][x:c_width]
+    c_err = np.mean(c) - np.mean(c_new)
+    c_err_kernel = c_err * kernel
+    c_err_kernel = c_err_kernel.repeat(c_height,axis=0)
+    c_err_kernel = c_err_kernel.repeat(c_width, axis=1)
+    x_left = x - kernel_off_x
+    if x_left < 0:
+        c_err_kernel = c_err_kernel[:,-x_left:]
+        x_left = 0
+    x_right = x_left + c_err_kernel.shape[1]
+    if x_right > img_arr.shape[1]:
+        c_err_kernel = c_err_kernel[:,:c_err_kernel.shape[1]-(x_right-img_arr.shape[1])]
+        x_right = img_arr.shape[1]
+    top = y
+    bottom = y + c_err_kernel.shape[0]
+    if bottom > img_arr.shape[0]:
+        c_err_kernel = c_err_kernel[:c_err_kernel.shape[0]-(bottom-img_arr.shape[0]),:]
+        bottom = img_arr.shape[0]
+    img_arr[top:bottom, x_left:x_right] += c_err_kernel
 
-def apply_fs_error_diff(c, c_new, img_arr, x, y):
-    c_err = c - c_new
-    for k_y in range(0, fs_k.shape[0]):
-        for k_x in range(0, fs_k.shape[1]):
-            if (y + k_y >= img_arr.shape[0]):
-                continue
-            if (x + k_x - 1 >= img_arr.shape[1] or x + k_x - 1 < 0):
-                continue
-            img_arr[y + k_y][x + k_x - 1] += c_err * fs_k[k_y][k_x]
 
 def quantize_grayscale(img: Image.Image, img_colors: int,
                        dither=DITHER_MODES.NONE, return_palette_map=False,
@@ -98,10 +107,10 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
             c_new = palette[c_new_idx]
             
             if (dither == DITHER_MODES.JJN):
-                apply_jjn_error_diff(c, c_new, img_arr, x, y)
+                apply_error_diff(c_new, img_arr, x, y, jjn_k, 2)
             
             if (dither == DITHER_MODES.FS):
-                apply_fs_error_diff(c, c_new, img_arr, x, y)
+                apply_error_diff(c_new, img_arr, x, y, fs_k, 1)
 
             img_arr[y][x] = c_new
     

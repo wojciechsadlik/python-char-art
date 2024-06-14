@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageOps, ImageEnhance
 import string
 import numpy as np
 
@@ -25,7 +25,7 @@ def max_brightness_per_pos(brightnesses):
 def normalize_brightness_map(brightnesses):
     return [b / max_brighntess_val(brightnesses) for b in brightnesses]
 
-def generate_brightness_map(char_set, font, window_size, bg_color=0, char_color=255, normalize=False):
+def generate_brightness_map(char_set, font, window_wh_size, bg_color=0, char_color=255, normalize=False, brightness_mod=1.0):
     width, height = 0, 0
     for char in char_set:
         width = max(width, font.getbbox(char)[2])
@@ -36,13 +36,97 @@ def generate_brightness_map(char_set, font, window_size, bg_color=0, char_color=
         img = Image.new(mode="L", size=(width, height), color=bg_color)
         img_d = ImageDraw.Draw(img)
         img_d.text((width,height), char, font=font, fill=char_color, anchor='rd')
-        res_img = img.resize(window_size, Image.Resampling.BOX)
+        res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
+        res_img = ImageEnhance.Brightness(res_img).enhance(brightness_mod)
+        res_arr = np.array(res_img)/255
+        brightnesses.append(res_arr)
+
+    if normalize:
+        brightnesses = normalize_brightness_map(brightnesses)
+
+    return {c: b for c, b in zip(char_set, brightnesses)}
+
+def generate_non_mono_brightness_map(char_set, font, max_width, height, bg_color=0, char_color=255, normalize=False):
+    max_width_in_set = max([font.getbbox(c)[2] for c in char_set])
+    width_scale = max_width / max_width_in_set
+    brightnesses = []
+    for char in char_set:
+        _, _, char_width, char_height = font.getbbox(char)
+        img = Image.new(mode="L", size=(char_width, char_height), color=bg_color)
+        img_d = ImageDraw.Draw(img)
+        img_d.text((char_width, char_height), char, font=font, fill=char_color, anchor='rd')
+        res_img = img.resize((int(char_width * width_scale), height), Image.Resampling.BOX)
         brightnesses.append(np.array(res_img)/255)
 
     if normalize:
         brightnesses = normalize_brightness_map(brightnesses)
 
     return {c: b for c, b in zip(char_set, brightnesses)}
+
+def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, bg_color=0, char_color=255, normalize=False):
+    width_sorted_set = sorted([(c, font.getbbox(c)[2]) for c in char_set], key=lambda c_w: c_w[1])
+    max_s, max_width = width_sorted_set.pop()
+    final_set = [max_s]
+    visited = set()
+    while len(width_sorted_set) > 0:
+        s1, w1 = width_sorted_set[-1]
+        if s1 in visited:
+            width_sorted_set.pop()
+            continue
+        else:
+            visited.add(s1)
+
+        expanded = False
+        for s2, w2 in width_sorted_set:
+            new_s1 = ''
+            new_s2 = ''
+            new_w = 0
+            if w1 + w2 <= max_width:
+                new_s1 = s1+s2
+                new_s2 = s2+s1
+                new_w = w1+w2
+            if new_w > 0:
+                expanded = True
+                width_sorted_set.append((new_s1, new_w))
+                width_sorted_set.append((new_s2, new_w))
+        
+        if not expanded:
+            final_set.append(s1)
+            width_sorted_set.pop()
+    
+    brightnesses = []
+    for char_str in final_set:
+        _, _, char_str_width, char_str_height = font.getbbox(char_str)
+        img = Image.new(mode="L", size=(char_str_width, char_str_height), color=bg_color)
+        img_d = ImageDraw.Draw(img)
+        img_d.text((char_str_width, char_str_height), char_str, font=font, fill=char_color, anchor='rd')
+        res_img = img.resize((width, height), Image.Resampling.BOX)
+        brightnesses.append(np.array(res_img)/255)
+
+    if normalize:
+        brightnesses = normalize_brightness_map(brightnesses)
+
+    return {c: b for c, b in zip(final_set, brightnesses)}
+
+def find_brightness_map(char_set, font, window_wh_size, bg_color=0, char_color=255, normalize=False):
+    b_step = 0.1
+    low_b = b_step
+    high_b = 6
+    res = []
+    for b in np.arange(low_b, high_b, b_step):
+        brightness_map = generate_brightness_map(char_set, font, window_wh_size, bg_color, char_color,
+                                                 brightness_mod=b, normalize=normalize)
+        distances = []
+        brightness = list(brightness_map.values())
+        for i in range(len(brightness)-1):
+            i_distances = []
+            for j in range(i+1, len(brightness)):
+                i_distances.append(np.linalg.norm(brightness[i]-brightness[j]))
+            distances.append(np.mean(sorted(i_distances)[:3]))
+        res.append(np.mean(distances))
+    b = low_b + res.index(max(res)) * b_step
+    return generate_brightness_map(char_set, font, window_wh_size, bg_color, char_color,
+                                    brightness_mod=b, normalize=normalize)
 
 def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, normalize=False):
     char_to_brightness = generate_brightness_map(char_set, font, (1,1), bg_color, char_color, normalize)
@@ -69,8 +153,11 @@ def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, no
 
     return char_bins, bin_to_brightness
 
-def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, normalize=False):
-    char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, normalize)
+def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, normalize=False, search_map=False):
+    if search_map:
+        char_to_brightness = find_brightness_map(char_palette, font, (1,2), normalize)
+    else:
+        char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, normalize)
     x_bins = bins[0]
     y_bins = bins[1]
 
