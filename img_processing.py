@@ -32,6 +32,12 @@ fs_k = np.array([
     [3, 5, 1]
 ]) / 16
 
+atkinson_k = np.array([
+    [0, 0, 1, 1],
+    [1, 1, 1, 0],
+    [0, 1, 0, 0]
+]) / 8
+
 def apply_threshold_map(c, m, r, x, y):
     n = len(m)
     return c + r * m[x % n][y % n]
@@ -56,11 +62,9 @@ def apply_error_diff(c_new, img_arr, x, y, kernel, kernel_off_x):
     img_arr[top:bottom, x_left:x_right] += c_err_kernel
 
 def apply_error_diff_window(c_new, c_width, c_height, img_arr, x, y, kernel, kernel_off_x):
-    c = img_arr[y:c_height][x:c_width]
+    c = img_arr[y:y+c_height,x:x+c_width]
     c_err = np.mean(c) - np.mean(c_new)
     c_err_kernel = c_err * kernel
-    c_err_kernel = c_err_kernel.repeat(c_height,axis=0)
-    c_err_kernel = c_err_kernel.repeat(c_width, axis=1)
     x_left = x - kernel_off_x
     if x_left < 0:
         c_err_kernel = c_err_kernel[:,-x_left:]
@@ -75,7 +79,6 @@ def apply_error_diff_window(c_new, c_width, c_height, img_arr, x, y, kernel, ker
         c_err_kernel = c_err_kernel[:c_err_kernel.shape[0]-(bottom-img_arr.shape[0]),:]
         bottom = img_arr.shape[0]
     img_arr[top:bottom, x_left:x_right] += c_err_kernel
-
 
 def quantize_grayscale(img: Image.Image, img_colors: int,
                        dither=DITHER_MODES.NONE, return_palette_map=False,
