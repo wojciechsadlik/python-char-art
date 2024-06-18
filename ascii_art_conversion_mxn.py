@@ -33,6 +33,14 @@ def scale_kernel(kernel, width, height, offset):
     scaled_kernel = scaled_kernel / np.sum(scaled_kernel)
     return scaled_kernel, offset * width
 
+def pick_cls_prediction(win, cls, char_to_brightness_map):
+    prediction = cls.predict_proba([win.flatten()])[0]
+    rand = random.random()
+    prob_sum = 0
+    for c, prob in zip(cls.classes_, prediction):
+        prob_sum += prob
+        if rand <= prob_sum:
+            return c, char_to_brightness_map[c]
 
 def quantize_grayscale_mxn(img: Image.Image, char_to_brightness_map,
                            brightness_hw_shape, dither=DITHER_MODES.NONE, allow_err=0.0, cls=None) -> list[list[int, int]]:
@@ -53,8 +61,7 @@ def quantize_grayscale_mxn(img: Image.Image, char_to_brightness_map,
             if cls == None:
                 min_char, min_br = find_match(win, char_to_brightness_map, allow_err)
             else:
-                min_char = cls.predict([win.flatten()])[0]
-                min_br = char_to_brightness_map[min_char]
+                min_char, min_br = pick_cls_prediction(win, cls, char_to_brightness_map)
 
             if (dither == DITHER_MODES.JJN):
                 apply_error_diff_window(min_br, min_br.shape[1], min_br.shape[0], img_arr, x, y, scaled_jjn_k, jjn_k_offset)

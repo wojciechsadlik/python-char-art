@@ -11,9 +11,9 @@ def train_classifier(char_set, font, size, layers, epochs, noise):
     brightness_X = np.array([b.flatten() for b in brightness_map.values()])
     brightness_y = list(brightness_map.keys())
 
-    repetitions = 50
-    train_X = np.tile(brightness_X, (repetitions,1))
-    train_y = brightness_y * repetitions
+    batch_size = 50
+    train_X = np.tile(brightness_X, (batch_size,1))
+    train_y = brightness_y * batch_size
 
     cls = MLPClassifier(hidden_layer_sizes=layers)
     for _ in range(epochs):

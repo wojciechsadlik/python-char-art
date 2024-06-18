@@ -25,7 +25,7 @@ def max_brightness_per_pos(brightnesses):
 def normalize_brightness_map(brightnesses):
     return [b / max_brighntess_val(brightnesses) for b in brightnesses]
 
-def generate_brightness_map(char_set, font, window_wh_size, bg_color=0, char_color=255, normalize=False, brightness_mod=1.0):
+def generate_brightness_map(char_set, font, window_wh_size, bg_color=0, char_color=255, normalize=False):
     width, height = 0, 0
     for char in char_set:
         width = max(width, font.getbbox(char)[2])
@@ -35,9 +35,8 @@ def generate_brightness_map(char_set, font, window_wh_size, bg_color=0, char_col
     for char in char_set:
         img = Image.new(mode="L", size=(width, height), color=bg_color)
         img_d = ImageDraw.Draw(img)
-        img_d.text((width,height), char, font=font, fill=char_color, anchor='rd')
+        img_d.text((width/2,height/2), char, font=font, fill=char_color, anchor='mm')
         res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
-        res_img = ImageEnhance.Brightness(res_img).enhance(brightness_mod)
         res_arr = np.array(res_img)/255
         brightnesses.append(res_arr)
 
@@ -54,8 +53,8 @@ def generate_non_mono_brightness_map(char_set, font, max_width, height, bg_color
         _, _, char_width, char_height = font.getbbox(char)
         img = Image.new(mode="L", size=(char_width, char_height), color=bg_color)
         img_d = ImageDraw.Draw(img)
-        img_d.text((char_width, char_height), char, font=font, fill=char_color, anchor='rd')
-        res_img = img.resize((int(char_width * width_scale), height), Image.Resampling.BOX)
+        img_d.text((char_width/2, char_height/2), char, font=font, fill=char_color, anchor='mm')
+        res_img = img.resize((int(char_width * width_scale), height), Image.Resampling.BICUBIC)
         brightnesses.append(np.array(res_img)/255)
 
     if normalize:
@@ -99,8 +98,8 @@ def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, b
         _, _, char_str_width, char_str_height = font.getbbox(char_str)
         img = Image.new(mode="L", size=(char_str_width, char_str_height), color=bg_color)
         img_d = ImageDraw.Draw(img)
-        img_d.text((char_str_width, char_str_height), char_str, font=font, fill=char_color, anchor='rd')
-        res_img = img.resize((width, height), Image.Resampling.BOX)
+        img_d.text((char_str_width/2, char_str_height/2), char_str, font=font, fill=char_color, anchor='mm')
+        res_img = img.resize((width, height), Image.Resampling.BICUBIC)
         brightnesses.append(np.array(res_img)/255)
 
     if normalize:
