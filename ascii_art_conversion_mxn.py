@@ -61,9 +61,6 @@ def quantize_grayscale_mxn(img: Image.Image, char_to_brightness_map,
             
             if (dither == DITHER_MODES.FS):
                 apply_error_diff_window(min_br, min_br.shape[1], min_br.shape[0], img_arr, x, y, scaled_fs_k, fs_k_offset)
-
-            if (dither == DITHER_MODES.FS):
-                apply_error_diff_window(min_br, min_br.shape[1], min_br.shape[0], img_arr, x, y, scaled_fs_k, fs_k_offset)
                         
             char_arr[-1].append(min_char)
             
