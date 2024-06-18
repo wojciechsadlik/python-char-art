@@ -1,7 +1,9 @@
 import numpy as np
 from PIL import Image
 import random
-from img_processing import DITHER_MODES, apply_threshold_map, dither_bayer_m, apply_error_diff, fs_k, jjn_k
+from img_processing import *
+from ascii_art_conversion_mxn import scale_kernel
+
 
 def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
                        dither=DITHER_MODES.NONE, return_palette_map=False,
@@ -21,6 +23,11 @@ def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
             for x in range(0, img_colors[1]):
                 palette[y][x][0] = linspace_y[y]
                 palette[y][x][1] = linspace_x[x]
+
+    if (dither == DITHER_MODES.JJN):
+        scaled_jjn_k, jjn_k_offset = scale_kernel(jjn_k, 1, 2, 2)
+    if (dither == DITHER_MODES.FS):
+        scaled_fs_k, fs_k_offset = scale_kernel(fs_k, 1, 2, 1)
 
     img_arr = np.array(img) / 255
     color_step_0 = 1 / img_colors[0]
@@ -50,22 +57,10 @@ def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
             c1_new = palette[c0_new_idx][c1_new_idx][1]
             
             if (dither == DITHER_MODES.JJN):
-                apply_error_diff(c0_new, img_arr, x, y-1, jjn_k, 2)
-                c1_new = img_arr[y][x]
-                c1_new_idx = int(c1_new / color_step_1)
-                c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
-                palette_map[y][x] = c1_new_idx
-                c1_new = palette[c0_new_idx][c1_new_idx][1]
-                apply_error_diff(c1_new, img_arr, x, y, jjn_k, 2)
+                apply_error_diff_window(np.array([c0_new, c1_new]), 1, 2, img_arr, x, y-1, scaled_jjn_k, jjn_k_offset)
             
             if (dither == DITHER_MODES.FS):
-                apply_error_diff(c0_new, img_arr, x, y-1, fs_k, 1)
-                c1_new = img_arr[y][x]
-                c1_new_idx = int(c1_new / color_step_1)
-                c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
-                palette_map[y][x] = c1_new_idx
-                c1_new = palette[c0_new_idx][c1_new_idx][1]
-                apply_error_diff(c1_new, img_arr, x, y, fs_k, 1)
+                apply_error_diff_window(np.array([c0_new, c1_new]), 1, 2, img_arr, x, y-1, scaled_fs_k, fs_k_offset)
 
             img_arr[y-1][x] = c0_new
             img_arr[y][x] = c1_new

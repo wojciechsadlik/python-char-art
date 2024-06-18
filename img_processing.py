@@ -63,7 +63,8 @@ def apply_error_diff(c_new, img_arr, x, y, kernel, kernel_off_x):
 
 def apply_error_diff_window(c_new, c_width, c_height, img_arr, x, y, kernel, kernel_off_x):
     c = img_arr[y:y+c_height,x:x+c_width]
-    c_err = np.mean(c) - np.mean(c_new)
+    c_err = c - c_new
+    c_err = np.tile(c_err, (kernel.shape[0]//c_height, kernel.shape[1]//c_width))
     c_err_kernel = c_err * kernel
     x_left = x - kernel_off_x
     if x_left < 0:

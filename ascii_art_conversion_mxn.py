@@ -42,8 +42,6 @@ def quantize_grayscale_mxn(img: Image.Image, char_to_brightness_map,
         scaled_jjn_k, jjn_k_offset = scale_kernel(jjn_k, brightness_hw_shape[1], brightness_hw_shape[0], 2)
     if (dither == DITHER_MODES.FS):
         scaled_fs_k, fs_k_offset = scale_kernel(fs_k, brightness_hw_shape[1], brightness_hw_shape[0], 1)
-    if (dither == DITHER_MODES.FS):
-        scaled_fs_k, fs_k_offset = scale_kernel(fs_k, brightness_hw_shape[1], brightness_hw_shape[0], 1)
 
     char_arr = []
     for up_y in range(brightness_hw_shape[0], img_arr.shape[0], brightness_hw_shape[0]):
