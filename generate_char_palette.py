@@ -107,25 +107,6 @@ def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, b
 
     return {c: b for c, b in zip(final_set, brightnesses)}
 
-def find_brightness_map(char_set, font, window_wh_size, bg_color=0, char_color=255, normalize=False):
-    b_step = 0.1
-    low_b = b_step
-    high_b = 6
-    res = []
-    for b in np.arange(low_b, high_b, b_step):
-        brightness_map = generate_brightness_map(char_set, font, window_wh_size, bg_color, char_color,
-                                                 brightness_mod=b, normalize=normalize)
-        distances = []
-        brightness = list(brightness_map.values())
-        for i in range(len(brightness)-1):
-            i_distances = []
-            for j in range(i+1, len(brightness)):
-                i_distances.append(np.linalg.norm(brightness[i]-brightness[j]))
-            distances.append(np.mean(sorted(i_distances)[:3]))
-        res.append(np.mean(distances))
-    b = low_b + res.index(max(res)) * b_step
-    return generate_brightness_map(char_set, font, window_wh_size, bg_color, char_color,
-                                    brightness_mod=b, normalize=normalize)
 
 def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, normalize=False):
     char_to_brightness = generate_brightness_map(char_set, font, (1,1), bg_color, char_color, normalize)
@@ -152,11 +133,9 @@ def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, no
 
     return char_bins, bin_to_brightness
 
-def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, normalize=False, search_map=False):
-    if search_map:
-        char_to_brightness = find_brightness_map(char_palette, font, (1,2), normalize)
-    else:
-        char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, normalize)
+def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, normalize=False):
+    char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, normalize)
+
     x_bins = bins[0]
     y_bins = bins[1]
 

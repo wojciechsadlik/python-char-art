@@ -2,7 +2,7 @@ import numpy as np
 from PIL import Image
 import random
 from img_processing import *
-from ascii_art_conversion_mxn import scale_kernel
+from ascii_art_conversion_wxh import scale_kernel
 
 
 def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],

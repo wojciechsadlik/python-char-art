@@ -42,7 +42,7 @@ def pick_cls_prediction(win, cls, char_to_brightness_map):
         if rand <= prob_sum:
             return c, char_to_brightness_map[c]
 
-def quantize_grayscale_mxn(img: Image.Image, char_to_brightness_map,
+def quantize_grayscale_wxh(img: Image.Image, char_to_brightness_map,
                            brightness_hw_shape, dither=DITHER_MODES.NONE, allow_err=0.0, cls=None) -> list[list[int, int]]:
     img_arr = np.array(img) / 255
 

@@ -2,7 +2,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.utils import shuffle
 from copy import deepcopy
 import numpy as np
-from generate_ascii_palette import generate_brightness_map
+from generate_char_palette import generate_brightness_map
 
 
 def train_classifier(char_set, font, size, layers, epochs, noise):
