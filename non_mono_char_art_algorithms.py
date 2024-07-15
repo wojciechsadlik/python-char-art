@@ -5,7 +5,7 @@ from multiprocessing import Pool, cpu_count
 from itertools import starmap, repeat
 import numpy as np
 from PIL import ImageChops
-from ascii_art_non_mono_utils import *
+from non_mono_char_art_utils import *
 
 USE_CPU = 1 + cpu_count() // 2
 
