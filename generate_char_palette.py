@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageOps, ImageEnhance
 import string
 import numpy as np
+import random
 
 def get_asciis():
     return list(filter(lambda a: a.isprintable(), string.printable))
@@ -62,14 +63,14 @@ def generate_non_mono_brightness_map(char_set, font, max_width, height, bg_color
 
     return {c: b for c, b in zip(char_set, brightnesses)}
 
-def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, bg_color=0, char_color=255, normalize=False):
+def generate_non_mono_width_aligned_permutations(char_set, font, prune=0.0):
     width_sorted_set = sorted([(c, font.getbbox(c)[2]) for c in char_set], key=lambda c_w: c_w[1])
     max_s, max_width = width_sorted_set.pop()
     final_set = [max_s]
     visited = set()
     while len(width_sorted_set) > 0:
         s1, w1 = width_sorted_set[-1]
-        if s1 in visited:
+        if s1 in visited or random.random() < prune:
             width_sorted_set.pop()
             continue
         else:
@@ -93,8 +94,13 @@ def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, b
             final_set.append(s1)
             width_sorted_set.pop()
     
+    return final_set
+
+def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, bg_color=0, char_color=255, normalize=False, prune=0.0):
+    width_aligned_set = generate_non_mono_width_aligned_permutations(char_set, font, prune)
+    
     brightnesses = []
-    for char_str in final_set:
+    for char_str in width_aligned_set:
         _, _, char_str_width, char_str_height = font.getbbox(char_str)
         img = Image.new(mode="L", size=(char_str_width, char_str_height), color=bg_color)
         img_d = ImageDraw.Draw(img)
@@ -105,7 +111,7 @@ def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, b
     if normalize:
         brightnesses = normalize_brightness_map(brightnesses)
 
-    return {c: b for c, b in zip(final_set, brightnesses)}
+    return {c: b for c, b in zip(width_aligned_set, brightnesses)}
 
 
 def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, normalize=False):

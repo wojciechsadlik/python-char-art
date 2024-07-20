@@ -7,6 +7,7 @@ class DITHER_MODES(Enum):
     BAYER = 2
     JJN = 3
     FS = 4
+    ATKINSON = 5
 
 def generate_bayer_matrix(n):
     if n == 1:
@@ -115,6 +116,9 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
             
             if (dither == DITHER_MODES.FS):
                 apply_error_diff(c_new, img_arr, x, y, fs_k, 1)
+            
+            if (dither == DITHER_MODES.ATKINSON):
+                apply_error_diff(c_new, img_arr, x, y, atkinson_k, 1)
 
             img_arr[y][x] = c_new
     
