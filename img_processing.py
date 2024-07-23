@@ -1,4 +1,4 @@
-from PIL import Image, ImageOps, ImageEnhance
+from PIL import Image, ImageOps, ImageEnhance, ImageFilter
 import numpy as np
 from enum import Enum
 
@@ -134,11 +134,24 @@ def preprocess_img(img: Image.Image,
                    brightness=1,
                    eq=0,
                    quantize_colors=255,
-                   dither=DITHER_MODES.NONE):
+                   dither=DITHER_MODES.NONE,
+                   sharpness=1,
+                   enhance_edges=0,
+                   grayscale=True):
     img = ImageOps.scale(img, scale_factor, Image.Resampling.BICUBIC)
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)
     img = Image.blend(img, ImageOps.equalize(img), eq)
-    img = quantize_grayscale(img, quantize_colors, dither)
-    img = img.convert("L")
+    img = ImageEnhance.Sharpness(img).enhance(sharpness)
+    img = Image.blend(img, img.filter(ImageFilter.EDGE_ENHANCE_MORE), enhance_edges)
+    if grayscale:
+        img = quantize_grayscale(img.convert("L"), quantize_colors, dither)
+    else:
+        img_r = img.getchannel("R")
+        img_g = img.getchannel("G")
+        img_b = img.getchannel("B")
+        img_r = quantize_grayscale(img_r, quantize_colors, dither)
+        img_g = quantize_grayscale(img_g, quantize_colors, dither)
+        img_b = quantize_grayscale(img_b, quantize_colors, dither)
+        img = Image.merge("RGB", (img_r, img_g, img_b))
     return img
