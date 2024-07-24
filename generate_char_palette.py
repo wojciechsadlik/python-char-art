@@ -2,9 +2,39 @@ from PIL import Image, ImageDraw, ImageOps, ImageEnhance
 import string
 import numpy as np
 import random
+from ansi_colors_parser import *
 
 def get_asciis():
     return list(filter(lambda a: a.isprintable(), string.printable))
+
+def get_char_set_with_inversions(char_set, fg_ansi_256_id=7, bg_ansi_256_id=0):
+    char_set_with_inversions = []
+    for a in char_set:
+        char_set_with_inversions.append(set_char_fg_color_code(fg_ansi_256_id) + set_char_bg_color_code(bg_ansi_256_id) + a)
+        char_set_with_inversions.append(set_char_fg_color_code(bg_ansi_256_id) + set_char_bg_color_code(fg_ansi_256_id) + a)
+    return char_set_with_inversions
+
+def get_ansi_256_colors_grayscale_set(char_set, num_colors=24):
+    if (num_colors > 24 or num_colors < 2):
+        raise Exception("num_colors should be < 24 and > 1")
+    ids = np.unique(np.linspace(232, 255, num_colors, endpoint=True, dtype=np.int32))
+    grayscale_set = []
+    for a in char_set:
+        for fg in ids:
+            for bg in ids:
+                if (fg != bg):
+                    grayscale_set.append(set_char_fg_color_code(fg) + set_char_bg_color_code(bg) + a)
+    return grayscale_set
+
+
+def get_ansi_256_colors_set(char_set):
+    colored_set = []
+    for a in char_set:
+        for fg in range(0, 256):
+            for bg in range(0, 256):
+                if (fg != bg):
+                    colored_set.append(set_char_fg_color_code(fg) + set_char_bg_color_code(bg) + a)
+    return colored_set
 
 def max_brighntess_val(brightnesses):
     max_b_glob = 0
@@ -26,17 +56,26 @@ def max_brightness_per_pos(brightnesses):
 def normalize_brightness_map(brightnesses):
     return [b / max_brighntess_val(brightnesses) for b in brightnesses]
 
-def generate_brightness_map(char_set, font, window_wh_size, bg_color=0, char_color=255, normalize=False):
+def generate_brightness_map(char_set, font, window_wh_size, bg_color=(0,0,0), char_color=(255,255,255), grayscale=True, normalize=False):
     width, height = 0, 0
     for char in char_set:
+        char = strip_ansi_codes(char)
         width = max(width, font.getbbox(char)[2])
         height = max(height, font.getbbox(char)[3])
 
     brightnesses = []
     for char in char_set:
-        img = Image.new(mode="L", size=(width, height), color=bg_color)
+        char_info = parse_ansi_colors(char)
+        if (char_info.get("fg_color") == None):
+            char_info["fg_color"] = char_color
+        if (char_info.get("bg_color") == None):
+            char_info["bg_color"] = bg_color
+
+        img = Image.new(mode="RGB", size=(width, height), color=char_info["bg_color"])
         img_d = ImageDraw.Draw(img)
-        img_d.text((width/2,height/2), char, font=font, fill=char_color, anchor='mm')
+        img_d.text((width/2,height/2), char_info["char"], font=font, fill=char_info["fg_color"], anchor='mm')
+        if (grayscale):
+            img = img.convert("L")
         res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
         res_arr = np.array(res_img)/255
         brightnesses.append(res_arr)
@@ -114,8 +153,8 @@ def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, b
     return {c: b for c, b in zip(width_aligned_set, brightnesses)}
 
 
-def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, normalize=False):
-    char_to_brightness = generate_brightness_map(char_set, font, (1,1), bg_color, char_color, normalize)
+def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, grayscale=True, normalize=False):
+    char_to_brightness = generate_brightness_map(char_set, font, (1,1), bg_color, char_color, grayscale, normalize)
     char_to_brightness = dict(map(lambda c_b: (c_b[0], c_b[1][0][0]), char_to_brightness.items()))
     sorted_map = sorted(char_to_brightness.items(), key=lambda c_b: c_b[1])
 
@@ -139,8 +178,8 @@ def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, no
 
     return char_bins, bin_to_brightness
 
-def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, normalize=False):
-    char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, normalize)
+def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, grayscale=True, normalize=False):
+    char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, grayscale, normalize)
 
     x_bins = bins[0]
     y_bins = bins[1]
