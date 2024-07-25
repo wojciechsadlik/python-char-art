@@ -69,3 +69,9 @@ def set_char_bg_color_code(id):
     return f'\x1b[48;5;{id}m'
 def reset_code():
     return '\x1b[0m'
+
+def rgb_to_ansi_256_id(r, g, b):
+    r = int(r / 255 * 5)
+    g = int(g / 255 * 5)
+    b = int(b / 255 * 5)
+    return 16 + 36 * r + 6 * g + 1 * b

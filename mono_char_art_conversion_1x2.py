@@ -3,6 +3,8 @@ from PIL import Image
 import random
 from img_processing import *
 from mono_char_art_conversion_wxh import scale_kernel
+from ansi_colors_parser import *
+from mono_char_art_conversion_1x1 import Ansi256ColorizeSettings
 
 
 def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
@@ -72,22 +74,41 @@ def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
     return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
 
 def img2char_arr_1x2(img: Image.Image, palette: list[list[str]],
-                     brightness_palette, dither=DITHER_MODES.NONE) -> list[list[str]]:
+                     brightness_palette, dither=DITHER_MODES.NONE, colorize_settings: Ansi256ColorizeSettings=None) -> list[list[str]]:
 
     img_arr = quantize_grayscale_1x2(img.convert("L"), (len(palette), len(palette[0])), dither, True, np.array(brightness_palette))
+    if (colorize_settings is None or img.mode != "RGB"):
+        return img_arr2char_arr_1x2(img_arr, palette, (len(palette), len(palette[0])))
+    
+    img_rgb = quantize_rgb(img, 6, dither)
+    img_rgb_arr = np.array(img_rgb, dtype=np.int32)
+    return img_arr2char_arr_1x2(img_arr, palette, (len(palette), len(palette[0])), img_rgb_arr, colorize_settings)
 
-    return img_arr2char_arr_1x2(img_arr, palette, (len(palette), len(palette[0])))
 
-def img_arr2char_arr_1x2(img_arr: np.ndarray, palette: list[list[str]], img_colors=(256,256)) -> list[list[str]]:
+def img_arr2char_arr_1x2(img_arr: np.ndarray, palette: list[list[str]], img_colors=(256,256), img_rgb_arr=None, colorize_settings: Ansi256ColorizeSettings=None) -> list[list[str]]:
     palette_y_interval = img_colors[0] / len(palette)
     palette_x_interval = img_colors[1] / len(palette[0])
-    ascii_arr = []
+    char_arr = []
     for y in range(1, img_arr.shape[0], 2):
-        ascii_arr.append([])
+        char_arr.append([])
         for x in range(img_arr.shape[1]):
             palette_cell = palette[int(img_arr[y-1][x]//palette_y_interval)][int(img_arr[y][x]//palette_x_interval)]
             if (len(palette_cell) > 1):
-                ascii_arr[-1].append(palette_cell[random.randint(0, len(palette_cell)-1)])
+                char_arr[-1].append(palette_cell[random.randint(0, len(palette_cell)-1)])
             else:
-                ascii_arr[-1].append(palette_cell[0])
-    return ascii_arr
+                char_arr[-1].append(palette_cell[0])
+            if img_rgb_arr is not None and colorize_settings is not None:
+                if colorize_settings.colored_fg:
+                    rgb_pix = (img_rgb_arr[y-1][x] + img_rgb_arr[y][x]) / 2
+                    rgb_pix = colorize_settings.fg_brightness_scale * rgb_pix
+                    rgb_pix = np.clip(rgb_pix, 0.0, 255.0)
+                    char_arr[-1][-1] = (set_char_fg_color_code(rgb_to_ansi_256_id(rgb_pix[0], rgb_pix[1], rgb_pix[2]))
+                                        + char_arr[-1][-1])
+                if colorize_settings.colored_bg:
+                    rgb_pix_bg = (img_rgb_arr[y-1][x] + img_rgb_arr[y][x]) / 2
+                    rgb_pix_bg = colorize_settings.bg_brightness_scale * rgb_pix_bg
+                    rgb_pix_bg = np.clip(rgb_pix_bg, 0.0, 255.0)
+                    char_arr[-1][-1] = (set_char_bg_color_code(rgb_to_ansi_256_id(rgb_pix_bg[0], rgb_pix_bg[1], rgb_pix_bg[2]))
+                                        + char_arr[-1][-1])
+                    
+    return char_arr

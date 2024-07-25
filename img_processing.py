@@ -128,6 +128,16 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
     img_arr = np.array(img_arr * 255, dtype=np.ubyte)
     return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
 
+def quantize_rgb(img: Image.Image, img_colors_per_channel: int,
+                dither=DITHER_MODES.NONE) -> Image.Image:
+    img_r = img.getchannel("R")
+    img_g = img.getchannel("G")
+    img_b = img.getchannel("B")
+    img_r = quantize_grayscale(img_r, img_colors_per_channel, dither)
+    img_g = quantize_grayscale(img_g, img_colors_per_channel, dither)
+    img_b = quantize_grayscale(img_b, img_colors_per_channel, dither)
+    return Image.merge("RGB", (img_r, img_g, img_b))
+
 def preprocess_img(img: Image.Image,
                    scale_factor=1,
                    contrast=1,
@@ -147,11 +157,5 @@ def preprocess_img(img: Image.Image,
     if grayscale:
         img = quantize_grayscale(img.convert("L"), quantize_colors, dither)
     else:
-        img_r = img.getchannel("R")
-        img_g = img.getchannel("G")
-        img_b = img.getchannel("B")
-        img_r = quantize_grayscale(img_r, quantize_colors, dither)
-        img_g = quantize_grayscale(img_g, quantize_colors, dither)
-        img_b = quantize_grayscale(img_b, quantize_colors, dither)
-        img = Image.merge("RGB", (img_r, img_g, img_b))
+        img = quantize_rgb(img, quantize_colors, dither)
     return img

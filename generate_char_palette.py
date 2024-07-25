@@ -153,8 +153,8 @@ def generate_non_mono_multi_char_brightness_map(char_set, font, width, height, b
     return {c: b for c, b in zip(width_aligned_set, brightnesses)}
 
 
-def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, grayscale=True, normalize=False):
-    char_to_brightness = generate_brightness_map(char_set, font, (1,1), bg_color, char_color, grayscale, normalize)
+def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, normalize=False):
+    char_to_brightness = generate_brightness_map(char_set, font, (1,1), bg_color, char_color, True, normalize)
     char_to_brightness = dict(map(lambda c_b: (c_b[0], c_b[1][0][0]), char_to_brightness.items()))
     sorted_map = sorted(char_to_brightness.items(), key=lambda c_b: c_b[1])
 
@@ -166,7 +166,7 @@ def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, gr
         char_bins[bin_index].append(char)
     
     if (len(char_bins[0]) == 0):
-        char_bins[0].append(sorted_map[0][1])
+        char_bins[0].append(sorted_map[0][0])
 
     for i in range(1, bins):
         if (len(char_bins[i]) == 0):
@@ -178,8 +178,8 @@ def generate_1_1_palette(char_set, font, bins=12, bg_color=0, char_color=255, gr
 
     return char_bins, bin_to_brightness
 
-def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, grayscale=True, normalize=False):
-    char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, grayscale, normalize)
+def generate_1_2_palette(char_palette, font, bins=(9,9), bg_color=0, char_color=255, normalize=False):
+    char_to_brightness = generate_brightness_map(char_palette, font, (1,2), bg_color, char_color, True, normalize)
 
     x_bins = bins[0]
     y_bins = bins[1]
