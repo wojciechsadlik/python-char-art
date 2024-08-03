@@ -126,7 +126,7 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
         return palette_map
 
     img_arr = np.array(img_arr * 255, dtype=np.ubyte)
-    return Image.frombytes("L", (img_arr.shape[1], img_arr.shape[0]), img_arr)
+    return Image.fromarray(img_arr, "L")
 
 def quantize_rgb(img: Image.Image, img_colors_per_channel: int,
                 dither=DITHER_MODES.NONE) -> Image.Image:
@@ -137,6 +137,11 @@ def quantize_rgb(img: Image.Image, img_colors_per_channel: int,
     img_g = quantize_grayscale(img_g, img_colors_per_channel, dither)
     img_b = quantize_grayscale(img_b, img_colors_per_channel, dither)
     return Image.merge("RGB", (img_r, img_g, img_b))
+
+def img_rgb_to_max_grayscale(img):
+    img = np.array(img, dtype=np.int32).max(2)
+    img = np.array(img, dtype=np.ubyte)
+    return Image.fromarray(img, "L")
 
 def preprocess_img(img: Image.Image,
                    scale_factor=1,

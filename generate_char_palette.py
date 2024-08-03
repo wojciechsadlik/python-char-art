@@ -3,6 +3,7 @@ import string
 import numpy as np
 import random
 from ansi_colors_parser import *
+from ansi_colorizer import set_char_fg_256_color_code, set_char_bg_256_color_code
 
 def get_asciis():
     return list(filter(lambda a: a.isprintable(), string.printable))
@@ -10,8 +11,8 @@ def get_asciis():
 def get_char_set_with_inversions(char_set, fg_ansi_256_id=7, bg_ansi_256_id=0):
     char_set_with_inversions = []
     for a in char_set:
-        char_set_with_inversions.append(set_char_fg_color_code(fg_ansi_256_id) + set_char_bg_color_code(bg_ansi_256_id) + a)
-        char_set_with_inversions.append(set_char_fg_color_code(bg_ansi_256_id) + set_char_bg_color_code(fg_ansi_256_id) + a)
+        char_set_with_inversions.append(set_char_fg_256_color_code(fg_ansi_256_id) + set_char_bg_256_color_code(bg_ansi_256_id) + a)
+        char_set_with_inversions.append(set_char_fg_256_color_code(bg_ansi_256_id) + set_char_bg_256_color_code(fg_ansi_256_id) + a)
     return char_set_with_inversions
 
 def get_ansi_256_colors_grayscale_set(char_set, num_colors=24):
@@ -23,7 +24,7 @@ def get_ansi_256_colors_grayscale_set(char_set, num_colors=24):
         for fg in ids:
             for bg in ids:
                 if (fg != bg):
-                    grayscale_set.append(set_char_fg_color_code(fg) + set_char_bg_color_code(bg) + a)
+                    grayscale_set.append(set_char_fg_256_color_code(fg) + set_char_bg_256_color_code(bg) + a)
     return grayscale_set
 
 
@@ -33,7 +34,7 @@ def get_ansi_256_colors_set(char_set):
         for fg in range(0, 256):
             for bg in range(0, 256):
                 if (fg != bg):
-                    colored_set.append(set_char_fg_color_code(fg) + set_char_bg_color_code(bg) + a)
+                    colored_set.append(set_char_fg_256_color_code(fg) + set_char_bg_256_color_code(bg) + a)
     return colored_set
 
 def max_brighntess_val(brightnesses):
