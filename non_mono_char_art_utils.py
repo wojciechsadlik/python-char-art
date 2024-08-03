@@ -6,29 +6,33 @@ from skimage import metrics
 
 SPACING = 2
 
+
 def new_img_draw(size, fill=0):
     img = Image.new("L", size, fill)
     draw = ImageDraw.Draw(img)
     return img, draw
 
+
 def clear_img(img, draw, fill=0):
-    draw.rectangle(((0,0), img.size), fill=fill)
+    draw.rectangle(((0, 0), img.size), fill=fill)
+
 
 def split_lines(img, palette, font, spacing=SPACING):
-    _, draw = new_img_draw(img.size)    
-    bbox = draw.textbbox((0,0), ''.join(palette), font=font)
-    
+    _, draw = new_img_draw(img.size)
+    bbox = draw.textbbox((0, 0), ''.join(palette), font=font)
+
     line_top_margin = bbox[1]
     line_width = img.size[0]
     line_height = bbox[3]
     lines = []
     top = 0
     bottom = line_height
-    while img.size[1] - bottom > line_height//2:
+    while img.size[1] - bottom > line_height // 2:
         lines.append(img.crop((0, top, line_width, bottom)))
         top = bottom - line_top_margin + spacing
         bottom = top + line_height
     return lines
+
 
 def palette_id_arr_to_text_arr(p_id_arr, palette):
     text_arr = []
@@ -36,23 +40,29 @@ def palette_id_arr_to_text_arr(p_id_arr, palette):
         text_arr.append(palette[id])
     return text_arr
 
+
 def text_arr_to_palette_id_arr(text_arr, palette):
     p_id_arr = []
     for c in text_arr:
         p_id_arr.append(palette.index(c))
     return p_id_arr
 
+
 def draw_text_arr(img_draw, text_arr, font, spacing=SPACING):
-    img_draw.multiline_text((0,0), ''.join(text_arr), font=font, fill=255, spacing=spacing)
+    img_draw.multiline_text((0, 0), ''.join(text_arr),
+                            font=font, fill=255, spacing=spacing)
+
 
 def evaluate_text_arr(text_arr, img, font):
     text_img, text_draw = new_img_draw(img.size)
     draw_text_arr(text_draw, text_arr, font)
-    return 1 - np.mean(ImageChops.difference(text_img, img))/255
+    return 1 - np.mean(ImageChops.difference(text_img, img)) / 255
+
 
 def evaluate_palette_id_arr(p_id_arr, palette, img, font):
     text_arr = palette_id_arr_to_text_arr(p_id_arr, palette)
     return evaluate_text_arr(text_arr, img, font)
+
 
 def evaluate_palette_id_population(population, palette, img, font):
     pop_fit = []
@@ -60,13 +70,19 @@ def evaluate_palette_id_population(population, palette, img, font):
         pop_fit.append(evaluate_palette_id_arr(el, palette, img, font))
     return pop_fit
 
-def align_population_lengths(population, length, palette_length=1, fill_id=None):
+
+def align_population_lengths(
+        population,
+        length,
+        palette_length=1,
+        fill_id=None):
     for i in range(len(population)):
         while len(population[i]) < length:
-            if fill_id != None:
+            if fill_id is not None:
                 population[i].append(fill_id)
             else:
                 population[i].append(random.randrange(0, palette_length))
+
 
 def sort_population(population, palette, img, font):
     fits = evaluate_palette_id_population(population, palette, img, font)
@@ -75,7 +91,14 @@ def sort_population(population, palette, img, font):
     sorted_population = list(map(lambda x: x[1], sorted_population))
     return sorted_population, sorted_fits
 
-def insert_into_sorted_population(population, fits, new_el, palette, img, font):
+
+def insert_into_sorted_population(
+        population,
+        fits,
+        new_el,
+        palette,
+        img,
+        font):
     new_fit = evaluate_palette_id_arr(new_el, palette, img, font)
     for i, f in enumerate(fits):
         if new_fit > f:
@@ -84,16 +107,18 @@ def insert_into_sorted_population(population, fits, new_el, palette, img, font):
             population.insert(i, new_el)
             population.pop()
             return
-        
+
+
 def calculate_longest_individual(img, palette, font):
     img_draw = ImageDraw.Draw(img)
     min_p_width = math.inf
     for p in palette:
-        bbox = img_draw.textbbox((0,0), p, font=font)
+        bbox = img_draw.textbbox((0, 0), p, font=font)
         if bbox[2] < min_p_width:
             min_p_width = bbox[2]
-    
+
     return math.ceil(img.size[0] / min_p_width)
+
 
 def find_end_of_line(text_arr, img, font):
     _, text_draw = new_img_draw(img.size)
@@ -102,9 +127,9 @@ def find_end_of_line(text_arr, img, font):
     right = len(text_arr) - 1
     while left < right:
         mid = (left + right) // 2
-        bbox = text_draw.textbbox((0,0), ''.join(text_arr[0:mid]), font=font)
+        bbox = text_draw.textbbox((0, 0), ''.join(text_arr[0:mid]), font=font)
         if bbox[2] >= img_width:
-            right = mid-1
+            right = mid - 1
         else:
-            left = mid+1
+            left = mid + 1
     return right
