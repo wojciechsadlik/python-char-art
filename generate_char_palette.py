@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageOps, ImageEnhance
+from PIL import Image, ImageDraw, ImageOps, ImageEnhance, ImageFilter, ImageChops
 import string
 import numpy as np
 import random
@@ -75,14 +75,17 @@ def normalize_brightness_map(brightnesses):
 
 
 def generate_brightness_map(
-    char_set, font, window_wh_size, bg_color=(
-        0, 0, 0), char_color=(
-            255, 255, 255), grayscale=True, normalize=False):
+    char_set, font, window_wh_size, bg_color=(0, 0, 0),
+    char_color=(255, 255, 255), grayscale=True, normalize=False):
+    
     width, height = 0, 0
     for char in char_set:
         char = strip_ansi_codes(char)
         width = max(width, font.getbbox(char)[2])
         height = max(height, font.getbbox(char)[3])
+
+    width -= width % window_wh_size[0]
+    height -= height % window_wh_size[1]
 
     brightnesses = []
     for char in char_set:
@@ -108,8 +111,16 @@ def generate_brightness_map(
             anchor='mm')
         if (grayscale):
             img = img.convert("L")
-        res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
-        res_arr = np.array(res_img) / 255
+        
+            arr = np.array(img) / 255
+            res_arr = np.zeros((window_wh_size[1], window_wh_size[0]))
+            for y, l in enumerate(np.split(arr, res_arr.shape[0], axis=0)):
+                for x, c in enumerate(np.split(l, res_arr.shape[1], axis=1)):
+                    res_arr[y][x] = np.mean(c)
+        else:
+            res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
+            res_arr = np.array(res_img) / 255
+
         brightnesses.append(res_arr)
 
     if normalize:

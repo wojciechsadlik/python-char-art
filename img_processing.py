@@ -4,11 +4,11 @@ from enum import Enum
 
 
 class DITHER_MODES(Enum):
-    NONE = 1
-    BAYER = 2
-    JJN = 3
-    FS = 4
-    ATKINSON = 5
+    NONE = 'NONE'
+    BAYER = 'BAYER'
+    JJN = 'JJN'
+    FS = 'FS'
+    ATKINSON = 'ATKINSON'
 
 
 def generate_bayer_matrix(n):
@@ -176,7 +176,7 @@ def preprocess_img(img: Image.Image,
                    contrast=1,
                    brightness=1,
                    eq=0,
-                   quantize_colors=255,
+                   quantize_colors=256,
                    dither=DITHER_MODES.NONE,
                    sharpness=1,
                    enhance_edges=0,

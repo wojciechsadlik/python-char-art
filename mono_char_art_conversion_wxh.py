@@ -4,27 +4,28 @@ import random
 from img_processing import *
 
 
-def find_match(win, char_to_brightness_map, allow_err=0):
-    min_dist = np.inf
-    min_char = ''
-    min_br = []
+def find_match(win, char_to_brightness_map, randomize=False):
+    max_dist = np.linalg.norm(np.ones(win.shape))
+    max_sim = 0
+    max_char = ''
+    max_br = []
     close_char = []
     close_br = []
     for char, br in char_to_brightness_map.items():
-        dist = np.linalg.norm(win - br)
+        sim = 1 - np.linalg.norm(win - br) / max_dist
 
-        if dist < min_dist:
-            min_dist = dist
-            min_char = char
-            min_br = br
-        if dist <= allow_err:
+        if (sim > max_sim):
+            max_sim = sim
+            max_char = char
+            max_br = br
+        if (sim > 0.5):
             close_char.append(char)
             close_br.append(br)
 
-    if allow_err > 0 and len(close_char) > 0:
+    if (len(close_char) > 1 and randomize):
         rand_char_id = random.randrange(len(close_char))
         return close_char[rand_char_id], close_br[rand_char_id]
-    return min_char, min_br
+    return max_char, max_br
 
 
 def scale_kernel(kernel, width, height, offset):
@@ -36,7 +37,11 @@ def scale_kernel(kernel, width, height, offset):
     return scaled_kernel, offset * width
 
 
-def pick_cls_prediction(win, cls, char_to_brightness_map):
+def pick_cls_prediction(win, cls, char_to_brightness_map, randomize=False):
+    if (not randomize):
+        prediction = cls.predict([win.flatten()])[0]
+        return prediction, char_to_brightness_map[prediction]
+
     prediction = cls.predict_proba([win.flatten()])[0]
     rand = random.random()
     prob_sum = 0
@@ -50,8 +55,8 @@ def quantize_grayscale_wxh(img: Image.Image,
                            char_to_brightness_map,
                            brightness_hw_shape,
                            dither=DITHER_MODES.NONE,
-                           allow_err=0.0,
-                           cls=None) -> list[list[int,
+                           cls=None,
+                           randomize=False) -> list[list[int,
                                                   int]]:
     img_arr = np.array(img) / 255
 
@@ -77,13 +82,13 @@ def quantize_grayscale_wxh(img: Image.Image,
                 brightness_hw_shape[1]):
             x = up_x - brightness_hw_shape[1]
             y = up_y - brightness_hw_shape[0]
-            win = np.copy(img_arr[y:up_y, x:up_x])
+            win = img_arr[y:up_y, x:up_x]
             if cls is None:
                 min_char, min_br = find_match(
-                    win, char_to_brightness_map, allow_err)
+                    win, char_to_brightness_map, randomize)
             else:
                 min_char, min_br = pick_cls_prediction(
-                    win, cls, char_to_brightness_map)
+                    win, cls, char_to_brightness_map, randomize)
 
             if (dither == DITHER_MODES.JJN):
                 apply_error_diff_window(
