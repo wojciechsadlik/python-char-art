@@ -104,6 +104,7 @@ def apply_error_diff_window(
                                     (bottom - img_arr.shape[0]), :]
         bottom = img_arr.shape[0]
     img_arr[top:bottom, x_left:x_right] += c_err_kernel
+    img_arr[top:bottom, x_left:x_right] = np.clip(img_arr[top:bottom, x_left:x_right], 0, 1)
 
 
 def quantize_grayscale(img: Image.Image, img_colors: int,

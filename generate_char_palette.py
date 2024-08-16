@@ -111,12 +111,15 @@ def generate_brightness_map(
             anchor='mm')
         if (grayscale):
             img = img.convert("L")
-        
-            arr = np.array(img) / 255
-            res_arr = np.zeros((window_wh_size[1], window_wh_size[0]))
-            for y, l in enumerate(np.split(arr, res_arr.shape[0], axis=0)):
-                for x, c in enumerate(np.split(l, res_arr.shape[1], axis=1)):
-                    res_arr[y][x] = np.mean(c)
+            res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
+            res_arr = np.array(res_img) / 255
+            
+            if (window_wh_size[1] > 2):
+                for i in range(res_arr.shape[1]):
+                    res_arr[0][i] = max(res_arr[0][i],
+                                        (res_arr[0][i] + res_arr[1][i]) / 2)
+                    res_arr[-1][i] = max(res_arr[-1][i],
+                                        (res_arr[-1][i] + res_arr[-2][i]) / 2)
         else:
             res_img = img.resize(window_wh_size, Image.Resampling.BICUBIC)
             res_arr = np.array(res_img) / 255

@@ -20,6 +20,7 @@ parser.add_argument('--invert', type=bool, nargs='?', const=True, default=False)
 args = parser.parse_args()
 FONT = ImageFont.truetype(args.font_path, 32)
 DITHER = DITHER_MODES(args.dither)
+char_set = get_asciis()
 
 img = Image.open(args.img_path).convert("RGB")
 if (args.invert):
@@ -36,7 +37,7 @@ img_h, img_w = img.size
 scale_factor = min(term_cols/img_w, term_lines/img_h)
 proc_img = preprocess_img(img, scale_factor, sharpness=2.0, enhance_edges=0.05)
 
-palette, palette_br = generate_1_1_palette(get_asciis(), FONT, 12, normalize=True)
+palette, palette_br = generate_1_1_palette(char_set, FONT, 12, normalize=True)
 ascii_arr = img2char_arr_1x1(proc_img, palette, palette_br, dither=DITHER)
 for i in range(len(ascii_arr)):
     for j in range(len(ascii_arr[i])):
@@ -46,7 +47,7 @@ for i in range(len(ascii_arr)):
 print('\n')
 
 
-palette, palette_br = generate_1_2_palette(get_asciis(), FONT, (8,8), normalize=True)
+palette, palette_br = generate_1_2_palette(char_set, FONT, (8,8), normalize=True)
 ascii_arr = img2char_arr_1x2(proc_img, palette, palette_br, dither=DITHER)
 for i in range(len(ascii_arr)):
     for j in range(len(ascii_arr[i])):
@@ -58,9 +59,9 @@ print('\n')
 
 W_H_WIN_SHAPE = (3,6)
 scale_factor *= W_H_WIN_SHAPE[0]
-proc_img = preprocess_img(img, scale_factor, sharpness=2.0, enhance_edges=0.05)
+proc_img = preprocess_img(img, scale_factor, sharpness=2.0, enhance_edges=0.05, brightness=0.8)
 
-char_to_brightness_map = generate_brightness_map(get_asciis(), FONT, W_H_WIN_SHAPE, normalize=True)
+char_to_brightness_map = generate_brightness_map(char_set, FONT, W_H_WIN_SHAPE, normalize=True)
 ascii_arr = quantize_grayscale_wxh(proc_img, char_to_brightness_map,
                                    (W_H_WIN_SHAPE[1], W_H_WIN_SHAPE[0]), DITHER, randomize=False)
 for i in range(len(ascii_arr)):
@@ -71,7 +72,7 @@ for i in range(len(ascii_arr)):
 print('\n')
 
 noise = 0.05
-cls, char_to_brightness_map = train_classifier(get_asciis(), FONT, W_H_WIN_SHAPE, (8,8,8), 50, noise)
+cls, char_to_brightness_map = train_classifier(char_set, FONT, W_H_WIN_SHAPE, (8,8,8), 50, noise)
 
 brightness_X = np.array([b.flatten() for b in char_to_brightness_map.values()])
 brightness_y = list(char_to_brightness_map.keys())

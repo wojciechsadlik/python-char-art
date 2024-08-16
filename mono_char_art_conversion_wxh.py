@@ -33,7 +33,7 @@ def scale_kernel(kernel, width, height, offset):
 
     scaled_kernel = scaled_kernel.repeat(height, axis=0)
     scaled_kernel = scaled_kernel.repeat(width, axis=1)
-    scaled_kernel = scaled_kernel / np.sum(scaled_kernel)
+    #scaled_kernel = scaled_kernel / np.sum(scaled_kernel) * width * height
     return scaled_kernel, offset * width
 
 
