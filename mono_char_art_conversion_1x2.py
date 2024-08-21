@@ -36,7 +36,8 @@ def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
     img_arr = np.array(img) / 255
     color_step_0 = 1 / img_colors[0]
     color_step_1 = 1 / img_colors[1]
-    palette_map = np.zeros(img_arr.shape)
+    palette_map = np.zeros((img_arr.shape[0]//2, img_arr.shape[1], 2),
+                           dtype=np.int32)
 
     for y in range(1, img_arr.shape[0], 2):
         for x in range(0, img_arr.shape[1]):
@@ -53,11 +54,11 @@ def quantize_grayscale_1x2(img: Image.Image, img_colors: tuple[int, int],
 
             c0_new_idx = int(c0_new / color_step_0)
             c0_new_idx = min(len(palette) - 1, max(0, c0_new_idx))
-            palette_map[y - 1][x] = c0_new_idx
 
             c1_new_idx = int(c1_new / color_step_1)
             c1_new_idx = min(len(palette[c0_new_idx]) - 1, max(0, c1_new_idx))
-            palette_map[y][x] = c1_new_idx
+            palette_map[y//2][x][0] = c0_new_idx
+            palette_map[y//2][x][1] = c1_new_idx
 
             c0_new = palette[c0_new_idx][c1_new_idx][0]
             c1_new = palette[c0_new_idx][c1_new_idx][1]
@@ -106,14 +107,13 @@ def img2char_arr_1x2(img: Image.Image,
 
 def img_arr2char_arr_1x2(img_arr: np.ndarray, palette: list[list[str]], img_colors=(
         256, 256), img_rgb_arr=None, colorize_settings: AnsiColorizer = None) -> list[list[str]]:
-    palette_y_interval = img_colors[0] / len(palette)
-    palette_x_interval = img_colors[1] / len(palette[0])
+    palette_y_interval = img_colors[0] // len(palette)
+    palette_x_interval = img_colors[1] // len(palette[0])
     char_arr = []
-    for y in range(1, img_arr.shape[0], 2):
+    for y in range(img_arr.shape[0]):
         char_arr.append([])
         for x in range(img_arr.shape[1]):
-            palette_cell = palette[int(
-                img_arr[y - 1][x] // palette_y_interval)][int(img_arr[y][x] // palette_x_interval)]
+            palette_cell = palette[img_arr[y][x][0] // palette_y_interval][img_arr[y][x][1] // palette_x_interval]
             if (len(palette_cell) > 1):
                 char_arr[-1].append(palette_cell[random.randint(0,
                                     len(palette_cell) - 1)])

@@ -122,7 +122,7 @@ def quantize_grayscale(img: Image.Image, img_colors: int,
 
     img_arr = np.array(img) / 255
     color_step = 1 / img_colors
-    palette_map = np.zeros(img_arr.shape)
+    palette_map = np.zeros(img_arr.shape, dtype=np.int32)
 
     for y in range(0, img_arr.shape[0]):
         for x in range(0, img_arr.shape[1]):
