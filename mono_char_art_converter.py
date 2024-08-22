@@ -6,7 +6,7 @@ from typing import Callable
 from generate_char_palette import (generate_1_1_palette,
     generate_1_2_palette, generate_brightness_map)
 from ansi_colorizer import AnsiColorizer
-from img_processing import DITHER_MODES, quantize_grayscale
+from img_processing import DITHER_MODES, quantize_grayscale, img_rgb_to_max_grayscale
 from mono_char_art_conversion_1x2 import quantize_grayscale_1x2
 
 
@@ -74,30 +74,29 @@ class MonoCharArtConverter:
 
 
     def pix2palette_id_mapping(self, img: Image.Image) -> np.ndarray:
-        if (self.colorize_settings is None or img.mode != "RGB"):
-            return quantize_grayscale(
-                img.convert("L"),
-                len(self.palette),
-                self.dither,
-                True,
-                self.palette_br
-            )
-        else:
-            raise Exception("TODO")
-        pass
+        if self.colorize:
+            img = img_rgb_to_max_grayscale(img)
+
+        return quantize_grayscale(
+            img.convert("L"),
+            len(self.palette),
+            self.dither,
+            True,
+            self.palette_br
+        )
 
 
     def two_pix2palette_id_mapping(self, img: Image.Image) -> np.ndarray:
-        if (self.colorize_settings is None or img.mode != "RGB"):
-            return quantize_grayscale_1x2(
-                img.convert("L"),
-                (len(self.palette), len(self.palette[0])),
-                self.dither,
-                True,
-                np.array(self.palette_br)
-            )
-        else:
-            raise Exception("TODO")
+        if self.colorize:
+            img = img_rgb_to_max_grayscale(img)
+            
+        return quantize_grayscale_1x2(
+            img.convert("L"),
+            (len(self.palette), len(self.palette[0])),
+            self.dither,
+            True,
+            np.array(self.palette_br)
+        )
 
 
     def palette_id_mapping2char_arr(self, img_mapped: np.ndarray, img: np.ndarray) -> list[list[str]]:
@@ -126,12 +125,21 @@ class MonoCharArtConverter:
                 else:
                     char = palette_cell[0]
 
+                if self.colorize:
+                    if self.general_palette_dims == 1:
+                        pix_rgb = img[y][x]
+                    else:
+                        pix_rgb = (img[y*2][x] + img[y*2+1][x]) / 2
+                    pix_rgb *= 255
+                    char = self.colorize_settings.create_ansi_prefix(pix_rgb) + char
                 char_arr[-1].append(char)
 
         return char_arr
 
 
     def convert(self, img: Image.Image) -> list[list[str]]:
+        self.colorize = (self.colorize_settings and img.mode == "RGB")
+
         if self.use_general_mapping:
             if self.general_palette_dims == 1:
                 if self.use_detailed_mapping:
@@ -155,7 +163,7 @@ class MonoCharArtConverter:
                     proc_img = copy.copy(img)
                 img_mapped = self.two_pix2palette_id_mapping(proc_img)
 
-            img = np.array(img) / 255
-            return self.palette_id_mapping2char_arr(img_mapped, img)
+            proc_img = np.array(proc_img) / 255
+            return self.palette_id_mapping2char_arr(img_mapped, proc_img)
 
         return []
