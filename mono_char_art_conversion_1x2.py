@@ -120,7 +120,7 @@ def img_arr2char_arr_1x2(img_arr: np.ndarray, palette: list[list[str]], img_colo
             else:
                 char_arr[-1].append(palette_cell[0])
             if img_rgb_arr is not None and colorize_settings is not None:
-                pix_rgb = (img_rgb_arr[y - 1][x] + img_rgb_arr[y][x]) / 2
+                pix_rgb = (img_rgb_arr[y*2][x] + img_rgb_arr[y*2 + 1][x]) / 2
                 char_arr[-1][-1] = colorize_settings.create_ansi_prefix(
                     pix_rgb) + char_arr[-1][-1]
 
