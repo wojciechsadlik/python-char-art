@@ -6,7 +6,8 @@ from typing import Callable
 from generate_char_palette import (generate_1_1_palette,
     generate_1_2_palette, generate_brightness_map)
 from ansi_colorizer import AnsiColorizer
-from img_processing import DITHER_MODES, quantize_grayscale, img_rgb_to_max_grayscale
+from img_processing import (DITHER_MODES, quantize_grayscale,
+    img_rgb_to_max_grayscale, quantize_rgb)
 from mono_char_art_conversion_1x2 import quantize_grayscale_1x2
 
 
@@ -14,6 +15,8 @@ from mono_char_art_conversion_1x2 import quantize_grayscale_1x2
 
 class MonoCharArtConverter:
     def detailed_search(self, chars: list[str], win: np.ndarray) -> str:
+        if (len(win.shape) == 3):
+            win = np.max(win, axis=2)
         max_dist = np.linalg.norm(np.ones(win.shape))
         max_sim = 0
         max_char = ''
@@ -110,15 +113,17 @@ class MonoCharArtConverter:
                 else:
                     palette_cell = self.palette[palette_id[0]][palette_id[1]]
                 
+                if self.use_detailed_mapping:
+                    win_y_range = (y*self.detailed_mapping_wh[1],
+                                    (y+1)*self.detailed_mapping_wh[1])
+                    win_x_range = (x*self.detailed_mapping_wh[0],
+                                    (x+1)*self.detailed_mapping_wh[0])
+
+                    win = img[win_y_range[0]:win_y_range[1],
+                                win_x_range[0]:win_x_range[1]]
+                
                 if (len(palette_cell) > 1):
                     if self.use_detailed_mapping:
-                        win_y_range = (y*self.detailed_mapping_wh[1],
-                                       (y+1)*self.detailed_mapping_wh[1])
-                        win_x_range = (x*self.detailed_mapping_wh[0],
-                                       (x+1)*self.detailed_mapping_wh[0])
-
-                        win = img[win_y_range[0]:win_y_range[1],
-                                  win_x_range[0]:win_x_range[1]]
                         char = self.detailed_search(palette_cell, win)
                     else:
                         char = palette_cell[random.randrange(0, len(palette_cell))]
@@ -126,10 +131,12 @@ class MonoCharArtConverter:
                     char = palette_cell[0]
 
                 if self.colorize:
-                    if self.general_palette_dims == 1:
-                        pix_rgb = img[y][x]
+                    if self.use_detailed_mapping:
+                        pix_rgb = np.mean(win, axis=0)
+                        pix_rgb = np.mean(pix_rgb, axis=0)
                     else:
                         pix_rgb = (img[y*2][x] + img[y*2+1][x]) / 2
+
                     pix_rgb *= 255
                     char = self.colorize_settings.create_ansi_prefix(pix_rgb) + char
                 char_arr[-1].append(char)
@@ -163,7 +170,10 @@ class MonoCharArtConverter:
                     proc_img = copy.copy(img)
                 img_mapped = self.two_pix2palette_id_mapping(proc_img)
 
-            proc_img = np.array(proc_img) / 255
-            return self.palette_id_mapping2char_arr(img_mapped, proc_img)
+            if self.colorize_settings.use_ansi_256_colors:
+                img = quantize_rgb(img, 6, self.dither)
+            
+            img = np.array(img) / 255
+            return self.palette_id_mapping2char_arr(img_mapped, img)
 
         return []

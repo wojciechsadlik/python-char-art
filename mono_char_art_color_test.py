@@ -18,6 +18,7 @@ parser.add_argument('--dither', type=str, nargs='?', default=DITHER_MODES.NONE)
 parser.add_argument('--cols', type=int, nargs='?')
 parser.add_argument('--lines', type=int, nargs='?')
 parser.add_argument('--invert', type=bool, nargs='?', const=True, default=False)
+parser.add_argument('--truecolor', type=bool, nargs='?', const=True, default=False)
 
 args = parser.parse_args()
 FONT = ImageFont.truetype(args.font_path, 32)
@@ -39,7 +40,7 @@ colorize_settings = AnsiColorizer(
     colored_bg=True,
     fg_brightness_scale=1.1,
     bg_brightness_scale=0.5,
-    use_ansi_256_colors=False
+    use_ansi_256_colors=not args.truecolor
 )
 
 img_h, img_w = img.size
@@ -78,40 +79,40 @@ print('\n')
 
 
 
-# W_H_WIN_SHAPE = (3,6)
-# scale_factor *= W_H_WIN_SHAPE[0]
-# proc_img = preprocess_img(img, scale_factor, sharpness=2.0, enhance_edges=0.05, grayscale=False)
+W_H_WIN_SHAPE = (3,6)
+scale_factor *= W_H_WIN_SHAPE[0]
+proc_img = preprocess_img(img, scale_factor, sharpness=2.0, enhance_edges=0.05, grayscale=False)
 
 
-# converter = MonoCharArtConverter(
-#     char_set=char_set,
-#     font=FONT,
-#     general_mapping_palette_shape=(9,),
-#     detailed_mapping_wh=W_H_WIN_SHAPE,
-#     colorize_settings=colorize_settings,
-#     dither=DITHER
-# )
-# ascii_arr = converter.convert(proc_img)
-# for i in range(len(ascii_arr)):
-#     for j in range(len(ascii_arr[i])):
-#         print(ascii_arr[i][j], sep='', end='')
-#     print(reset_code() + '\n', end='')
+converter = MonoCharArtConverter(
+    char_set=char_set,
+    font=FONT,
+    general_mapping_palette_shape=(9,),
+    detailed_mapping_wh=W_H_WIN_SHAPE,
+    colorize_settings=colorize_settings,
+    dither=DITHER
+)
+ascii_arr = converter.convert(proc_img)
+for i in range(len(ascii_arr)):
+    for j in range(len(ascii_arr[i])):
+        print(ascii_arr[i][j], sep='', end='')
+    print(reset_code() + '\n', end='')
 
-# print('\n')
+print('\n')
 
 
-# converter = MonoCharArtConverter(
-#     char_set=char_set,
-#     font=FONT,
-#     general_mapping_palette_shape=(6,6),
-#     detailed_mapping_wh=W_H_WIN_SHAPE,
-#     colorize_settings=colorize_settings,
-#     dither=DITHER
-# )
-# ascii_arr = converter.convert(proc_img)
-# for i in range(len(ascii_arr)):
-#     for j in range(len(ascii_arr[i])):
-#         print(ascii_arr[i][j], sep='', end='')
-#     print(reset_code() + '\n', end='')
+converter = MonoCharArtConverter(
+    char_set=char_set,
+    font=FONT,
+    general_mapping_palette_shape=(6,6),
+    detailed_mapping_wh=W_H_WIN_SHAPE,
+    colorize_settings=colorize_settings,
+    dither=DITHER
+)
+ascii_arr = converter.convert(proc_img)
+for i in range(len(ascii_arr)):
+    for j in range(len(ascii_arr[i])):
+        print(ascii_arr[i][j], sep='', end='')
+    print(reset_code() + '\n', end='')
 
-# print('\n')
+print('\n')
