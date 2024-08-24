@@ -170,7 +170,7 @@ class MonoCharArtConverter:
                     proc_img = copy.copy(img)
                 img_mapped = self.two_pix2palette_id_mapping(proc_img)
 
-            if self.colorize_settings.use_ansi_256_colors:
+            if self.colorize and self.colorize_settings.use_ansi_256_colors:
                 img = quantize_rgb(img, 6, self.dither)
             
             img = np.array(img) / 255
