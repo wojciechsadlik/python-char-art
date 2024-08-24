@@ -1,12 +1,7 @@
 import argparse
 from shutil import get_terminal_size
 from PIL import Image, ImageFont, ImageChops
-from mono_char_art_conversion_1x1 import img2char_arr_1x1
-from mono_char_art_conversion_1x2 import img2char_arr_1x2
-from mono_char_art_conversion_wxh import quantize_grayscale_wxh
-from mono_char_art_conversion_mlp import train_classifier
 from img_processing import preprocess_img, DITHER_MODES
-from braille_art import get_braille_chars
 from generate_char_palette import *
 from mono_char_art_converter import MonoCharArtConverter
 from ansi_colorizer import AnsiColorizer, reset_code
@@ -19,6 +14,10 @@ parser.add_argument('--cols', type=int, nargs='?')
 parser.add_argument('--lines', type=int, nargs='?')
 parser.add_argument('--invert', type=bool, nargs='?', const=True, default=False)
 parser.add_argument('--truecolor', type=bool, nargs='?', const=True, default=False)
+parser.add_argument('--bg_brightness', type=float, nargs='?', default=0.5)
+parser.add_argument('--fg_brightness', type=float, nargs='?', default=1.0)
+parser.add_argument('--no_bg', type=bool, nargs='?', const=True, default=False)
+parser.add_argument('--no_fg', type=bool, nargs='?', const=True, default=False)
 
 args = parser.parse_args()
 FONT = ImageFont.truetype(args.font_path, 32)
@@ -36,10 +35,10 @@ if (args.lines):
     term_lines = args.lines
 
 colorize_settings = AnsiColorizer(
-    colored_fg=True,
-    colored_bg=True,
-    fg_brightness_scale=1.1,
-    bg_brightness_scale=0.5,
+    colored_fg=not args.no_fg,
+    colored_bg=not args.no_bg,
+    fg_brightness_scale=args.fg_brightness,
+    bg_brightness_scale=args.bg_brightness,
     use_ansi_256_colors=not args.truecolor
 )
 
