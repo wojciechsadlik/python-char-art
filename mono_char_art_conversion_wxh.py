@@ -72,12 +72,12 @@ def quantize_grayscale_wxh(img: Image.Image,
     char_arr = []
     for up_y in range(
             brightness_hw_shape[0],
-            img_arr.shape[0],
+            img_arr.shape[0]+1,
             brightness_hw_shape[0]):
         char_arr.append([])
         for up_x in range(
                 brightness_hw_shape[1],
-                img_arr.shape[1],
+                img_arr.shape[1]+1,
                 brightness_hw_shape[1]):
             x = up_x - brightness_hw_shape[1]
             y = up_y - brightness_hw_shape[0]
