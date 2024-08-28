@@ -38,7 +38,8 @@ class MonoCharArtConverter:
                  general_mapping_palette_shape: tuple | None = None,
                  detailed_mapping_wh: tuple | None = None,
                  colorize_settings: AnsiColorizer | None = None,
-                 dither: DITHER_MODES = DITHER_MODES.NONE
+                 dither: DITHER_MODES = DITHER_MODES.NONE,
+                 normalize_palette: bool = True
                 ):
         self.colorize_settings = colorize_settings
         self.use_general_mapping = general_mapping_palette_shape is not None
@@ -52,7 +53,7 @@ class MonoCharArtConverter:
                     char_set,
                     font,
                     general_mapping_palette_shape[0],
-                    normalize=True
+                    normalize=normalize_palette
                 )
             else:
                 self.general_palette_dims = 2
@@ -63,7 +64,7 @@ class MonoCharArtConverter:
                         general_mapping_palette_shape[0],
                         general_mapping_palette_shape[1],
                     ),
-                    normalize=True
+                    normalize=normalize_palette
                 )
         
         if self.use_detailed_mapping:
@@ -72,7 +73,7 @@ class MonoCharArtConverter:
                 char_set,
                 font,
                 detailed_mapping_wh,
-                normalize=True
+                normalize=normalize_palette
             )
 
 
