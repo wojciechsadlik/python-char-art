@@ -2,7 +2,6 @@ import random
 import math
 from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageOps
 import numpy as np
-from skimage import metrics
 
 SPACING = 2
 
