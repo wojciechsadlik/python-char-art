@@ -1,10 +1,6 @@
-pyvenv.cfg
-etc/
-Include/
-Lib/
-Scripts/
-share/
+__pycache__/
+.venv
+.vscode
 character_imgs/
 fonts/
 imgs/
-__pycache__/

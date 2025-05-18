@@ -73,7 +73,7 @@ def scale_pix_rgb_brightness(pix_rgb, scale):
         return scale * pix_rgb
 
     scale -= 1
-    white = np.array([255, 255, 255])
+    white = np.array([255.0, 255.0, 255.0])
     return np.clip(pix_rgb + scale * white, 0.0, 255.0)
 
 
@@ -82,8 +82,8 @@ class AnsiColorizer:
             self,
             colored_fg,
             colored_bg,
-            fg_brightness_scale,
-            bg_brightness_scale,
+            fg_brightness_scale=1.0,
+            bg_brightness_scale=0.5,
             use_ansi_256_colors=True):
         self.colored_fg = colored_fg
         self.colored_bg = colored_bg
@@ -104,21 +104,17 @@ class AnsiColorizer:
     def create_ansi_prefix(self, pix_rgb):
         ansi_prefix = ""
         if self.colored_fg:
-            rgb_pix = pix_rgb
-            rgb_pix = scale_pix_rgb_brightness(
-                rgb_pix, self.fg_brightness_scale)
-            rgb_pix = np.clip(rgb_pix, 0.0, 255.0)
+            scaled_rgb_fg = scale_pix_rgb_brightness(
+                pix_rgb, self.fg_brightness_scale)
             ansi_prefix += self.set_fg_color_code(
-                rgb_pix[0],
-                rgb_pix[1],
-                rgb_pix[2])
+                scaled_rgb_fg[0],
+                scaled_rgb_fg[1],
+                scaled_rgb_fg[2])
         if self.colored_bg:
-            rgb_pix_bg = pix_rgb
-            rgb_pix_bg = scale_pix_rgb_brightness(
-                rgb_pix_bg, self.bg_brightness_scale)
-            rgb_pix_bg = np.clip(rgb_pix_bg, 0.0, 255.0)
+            scaled_rgb_bg = scale_pix_rgb_brightness(
+                pix_rgb, self.bg_brightness_scale)
             ansi_prefix += self.set_bg_color_code(
-                rgb_pix_bg[0],
-                rgb_pix_bg[1],
-                rgb_pix_bg[2])
+                scaled_rgb_bg[0],
+                scaled_rgb_bg[1],
+                scaled_rgb_bg[2])
         return ansi_prefix

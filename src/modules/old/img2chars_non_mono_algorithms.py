@@ -5,8 +5,7 @@ from multiprocessing import Pool, cpu_count
 from itertools import starmap, repeat
 import numpy as np
 from PIL import ImageChops
-from non_mono_char_art_utils import *
-
+from modules.old.img2chars_non_mono_utils import *
 USE_CPU = 1 + cpu_count() // 2
 
 
@@ -15,13 +14,10 @@ def generate_random_line(line, palette, font):
     _, text_draw = new_img_draw(line.size)
     text_arr = []
     bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
-
     while line_size[0] > bbox[2]:
         text_arr.append(palette[random.randrange(0, len(palette))])
         bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
-
     text_arr.pop()
-
     return text_arr
 
 
@@ -29,7 +25,6 @@ def lazy_random_search(img, palette, font):
     lines = split_lines(img, palette, font)
     best_fit = -math.inf
     best_text_arr = []
-
     while True:
         text_arr = []
         for l in lines:
@@ -64,7 +59,6 @@ def generate_greedy_line(line, palette, font):
         bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
 
     text_arr.pop()
-
     return text_arr
 
 

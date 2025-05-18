@@ -52,63 +52,28 @@ def apply_error_diff(c_new, img_arr, x, y, kernel, kernel_off_x):
     c = img_arr[y][x]
     c_err = c - c_new
     c_err_kernel = c_err * kernel
-    x_left = x - kernel_off_x
-    if x_left < 0:
-        c_err_kernel = c_err_kernel[:, -x_left:]
-        x_left = 0
-    x_right = x_left + c_err_kernel.shape[1]
-    if x_right > img_arr.shape[1]:
-        c_err_kernel = c_err_kernel[:,
-                                    :c_err_kernel.shape[1] - (x_right - img_arr.shape[1])]
-        x_right = img_arr.shape[1]
+    left = x - kernel_off_x
+    if left < 0:
+        c_err_kernel = c_err_kernel[:, -left:]
+        left = 0
+    right = left + c_err_kernel.shape[1]
+    if right > img_arr.shape[1]:
+        right = c_err_kernel.shape[1] - (right - img_arr.shape[1])
+        c_err_kernel = c_err_kernel[:, :right]
+        right = img_arr.shape[1]
     top = y
     bottom = y + c_err_kernel.shape[0]
     if bottom > img_arr.shape[0]:
-        c_err_kernel = c_err_kernel[:c_err_kernel.shape[0] -
-                                    (bottom - img_arr.shape[0]), :]
+        bottom = c_err_kernel.shape[0] - (bottom - img_arr.shape[0])
+        c_err_kernel = c_err_kernel[:bottom, :]
         bottom = img_arr.shape[0]
-    img_arr[top:bottom, x_left:x_right] += c_err_kernel
+    img_arr[top:bottom, left:right] += c_err_kernel
 
 
-def apply_error_diff_window(
-        c_new,
-        c_width,
-        c_height,
-        img_arr,
-        x,
-        y,
-        kernel,
-        kernel_off_x):
-    c = img_arr[y:y + c_height, x:x + c_width]
-    c_err = c - c_new
-    c_err = np.tile(
-        c_err,
-        (kernel.shape[0] //
-         c_height,
-         kernel.shape[1] //
-         c_width))
-    c_err_kernel = c_err * kernel
-    x_left = x - kernel_off_x
-    if x_left < 0:
-        c_err_kernel = c_err_kernel[:, -x_left:]
-        x_left = 0
-    x_right = x_left + c_err_kernel.shape[1]
-    if x_right > img_arr.shape[1]:
-        c_err_kernel = c_err_kernel[:,
-                                    :c_err_kernel.shape[1] - (x_right - img_arr.shape[1])]
-        x_right = img_arr.shape[1]
-    top = y
-    bottom = y + c_err_kernel.shape[0]
-    if bottom > img_arr.shape[0]:
-        c_err_kernel = c_err_kernel[:c_err_kernel.shape[0] -
-                                    (bottom - img_arr.shape[0]), :]
-        bottom = img_arr.shape[0]
-    img_arr[top:bottom, x_left:x_right] += c_err_kernel
-    img_arr[top:bottom, x_left:x_right] = np.clip(img_arr[top:bottom, x_left:x_right], 0, 1)
-
-
-def quantize_grayscale(img: Image.Image, img_colors: int,
-                       dither=DITHER_MODES.NONE, return_palette_map=False,
+def quantize_grayscale(img: Image.Image,
+                       img_colors: int,
+                       dither=DITHER_MODES.NONE,
+                       return_palette_map=False,
                        palette: np.ndarray = None) -> Image.Image | np.ndarray:
     if (img.mode != "L"):
         raise Exception("img mode should be \"L\"")
@@ -173,14 +138,14 @@ def img_rgb_to_max_grayscale(img):
 
 
 def preprocess_img(img: Image.Image,
-                   scale_factor=1,
-                   contrast=1,
-                   brightness=1,
-                   eq=0,
+                   scale_factor=1.0,
+                   contrast=1.0,
+                   brightness=1.0,
+                   eq=0.0,
                    quantize_colors=256,
                    dither=DITHER_MODES.NONE,
-                   sharpness=1,
-                   enhance_edges=0,
+                   sharpness=1.0,
+                   enhance_edges=0.0,
                    grayscale=True):
     img = ImageOps.scale(img, scale_factor, Image.Resampling.BICUBIC)
     img = ImageEnhance.Contrast(img).enhance(contrast)
@@ -189,8 +154,7 @@ def preprocess_img(img: Image.Image,
     img = ImageEnhance.Sharpness(img).enhance(sharpness)
     img = Image.blend(
         img,
-        img.filter(
-            ImageFilter.EDGE_ENHANCE_MORE),
+        img.filter(ImageFilter.EDGE_ENHANCE_MORE),
         enhance_edges)
     if grayscale:
         img = quantize_grayscale(img.convert("L"), quantize_colors, dither)

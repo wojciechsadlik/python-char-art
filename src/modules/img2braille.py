@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-from img_processing import DITHER_MODES, quantize_grayscale
+from modules.img_processing import DITHER_MODES, quantize_grayscale
 
 BRAILLE_UNICODE_START = 0x2800
 
@@ -17,7 +17,11 @@ def get_braille_chars():
 
 def img2braille_arr(img: Image.Image,
                     dither=DITHER_MODES.NONE) -> list[list[str]]:
-    img_arr = quantize_grayscale(img.convert("L"), 2, dither, True)
+    img_arr = quantize_grayscale(
+        img.convert("L"),
+        img_colors=2,
+        dither=dither,
+        return_palette_map=True)
     return img_arr2braille_arr(img_arr, img_colors=2)
 
 
@@ -48,5 +52,4 @@ def img_arr2braille_arr(img_arr: np.ndarray,
             braille_unicode_offset ^= 0b011111111
             braille_arr[-1].append(chr(BRAILLE_UNICODE_START +
                                    braille_unicode_offset))
-
     return braille_arr
