@@ -40,12 +40,16 @@ def render_symbols_img(
         symbol_arr: list[list[str]],
         font: FreeTypeFont,
         bg_color=(0, 0, 0),
-        fg_color=(255, 255, 255)) -> Image:
+        fg_color=(255, 255, 255)) -> Image.Image:
     img = Image.new("RGB", (1, 1), bg_color)
     img_d = ImageDraw.Draw(img)
     text = symbol_arr_to_str(symbol_arr)
-    bbox = font.getbbox(text)
+    bbox = img_d.multiline_textbbox((0, 0), text=text, font=font)
     width, height = bbox[2], bbox[3]
     img = Image.new("RGB", (width, height), bg_color)
     img_d = ImageDraw.Draw(img)
-    img_d.text((width / 2, height / 2), text, fg_color, anchor="mm")
+    img_d.multiline_text((0, 0),
+                         text=text,
+                         font=font,
+                         fill=fg_color)
+    return img

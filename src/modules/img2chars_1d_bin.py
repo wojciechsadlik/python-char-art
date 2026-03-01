@@ -55,7 +55,7 @@ class Img2Chars1dBin:
                  bg_color=0,
                  fg_color=255,
                  img_colors=256):
-        self.bin_palette = make_1d_bin_palette(
+        self.bin_palette, _ = make_1d_bin_palette(
             symbols=symbols,
             font=font,
             bins=bins,
