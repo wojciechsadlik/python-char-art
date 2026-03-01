@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
-from modules.palette_generator import make_symbol2value_map
+from modules.palette_generation import make_symbol2value_map
 
 
 def make_batch(symbol2value, batch_size=1, noise=0.0):

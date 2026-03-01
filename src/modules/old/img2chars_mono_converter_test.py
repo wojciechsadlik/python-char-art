@@ -2,7 +2,7 @@ import argparse
 from shutil import get_terminal_size
 from PIL import Image, ImageFont, ImageChops
 from modules.img_processing import preprocess_img, DITHER_MODES
-from modules.palette_generator import get_asciis
+from modules.palette_generation import get_asciis
 from modules.img2chars_mono_converter import Img2MonoCharsConverter, pick_closest
 
 parser = argparse.ArgumentParser()

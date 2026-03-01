@@ -3,7 +3,7 @@ import numpy as np
 import random
 import copy
 from typing import Protocol
-from modules.palette_generator import (
+from modules.palette_generation import (
     make_1d_bin_palette,
     make_2d_bin_palette,
     make_symbol2value_map)
