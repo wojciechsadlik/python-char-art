@@ -15,7 +15,6 @@ class Img2CharsNearest:
                  wh=(3, 6),
                  bg_color=0,
                  fg_color=255,
-                 normalize=False,
                  metrics=nearest):
         self.symbol2value = make_symbol2value_map(
             symbols=symbols,
@@ -24,7 +23,7 @@ class Img2CharsNearest:
             val_height=wh[1],
             bg_color=bg_color,
             fg_color=fg_color,
-            normalize=normalize,
+            normalize=True,
             grayscale=True)
         self.metrics = metrics
 

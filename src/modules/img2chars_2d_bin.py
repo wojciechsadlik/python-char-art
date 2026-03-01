@@ -83,7 +83,6 @@ class Img2Chars2dBin:
                  bins=(9, 9),
                  bg_color=0,
                  fg_color=255,
-                 normalize=False,
                  img_colors=256):
         self.bin_palette = make_2d_bin_palette(
             symbols=symbols,
@@ -91,7 +90,7 @@ class Img2Chars2dBin:
             bins=bins,
             bg_color=bg_color,
             fg_color=fg_color,
-            normalize=normalize)
+            normalize=True)
         self.palette_interval = (
             img_colors / bins[0],
             img_colors / bins[1]
