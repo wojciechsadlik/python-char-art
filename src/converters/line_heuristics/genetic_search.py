@@ -1,7 +1,7 @@
 import random
 from PIL import Image, ImageFont
-from base import LineConverter
-from utils import generate_line_population, insert_into_sorted_population, symbols_id_arr_to_text_arr
+from converters.line_heuristics.base import LineConverter
+from converters.line_heuristics.utils import generate_line_population, insert_into_sorted_population, symbols_id_arr_to_text_arr
 
 
 class GeneticLineSearch(LineConverter):
@@ -10,7 +10,7 @@ class GeneticLineSearch(LineConverter):
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
             generations: int = 50,
-            pop_count: int = 10,
+            pop_count: int = 20,
             mutation_rate: float = 0.3,
             mutation_bw: int = 2,
             include_greedy: bool = False) -> None:

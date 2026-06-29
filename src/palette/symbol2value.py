@@ -171,3 +171,16 @@ def stream_width_aligned_permutations(symbols, font, skip_chance=0.0):
             next_str = curr_str + symbs[i]
             next_width = curr_width + widths[i]
             str_widths.append((next_str, next_width))
+
+
+def symbols_sorted(symbols, font):
+    symbol2brightness = make_symbol2value_map(
+        symbols=symbols,
+        font=font,
+        val_height=1,
+        val_width=1,
+        normalize=True)
+    symb_brs = [(s, b[0][0]) for s, b in symbol2brightness.items()]
+    symb_brs = sorted(symb_brs, key=lambda s_b: s_b[1])
+    return list(map(lambda s_b: s_b[0], symb_brs))
+

@@ -2,8 +2,9 @@ import random
 import math
 from PIL import Image, ImageDraw, ImageChops, ImageFont
 import numpy as np
+from sewar.full_ref import mse
 
-SPACING: int = 2
+from rendering.image import render_symbols_img
 
 
 def new_img_draw(size: tuple[int, int],
@@ -16,19 +17,17 @@ def new_img_draw(size: tuple[int, int],
 
 def split_lines(img: Image.Image,
                 symbols: list[str],
-                font: ImageFont.FreeTypeFont,
-                spacing: int = SPACING) -> list[Image.Image]:
+                font: ImageFont.FreeTypeFont) -> list[Image.Image]:
     _, draw = new_img_draw(img.size)
     bbox = draw.textbbox((0, 0), ''.join(symbols), font=font)
-    line_top_margin = bbox[1]
     line_width = img.size[0]
     line_height = bbox[3]
     lines: list[Image.Image] = []
     top = 0
     bottom = line_height
-    while img.size[1] - bottom > line_height // 2:
+    while img.size[1] - top > line_height:
         lines.append(img.crop((0, top, line_width, bottom)))
-        top = bottom - line_top_margin + spacing
+        top = bottom
         bottom = top + line_height
     return lines
 
@@ -48,28 +47,40 @@ def text_arr_to_symbols_id_arr(
 def draw_text_arr(
         img_draw: ImageDraw.ImageDraw,
         text_arr: list[str],
-        font: ImageFont.FreeTypeFont,
-        spacing: int = SPACING) -> None:
+        font: ImageFont.FreeTypeFont) -> None:
     img_draw.multiline_text((0, 0), ''.join(text_arr),
-                            font=font, fill=255, spacing=spacing)
+                            font=font, fill=255)
 
+def similarity(src_img: Image, res_img: Image):
+    target_size = (max(src_img.width, res_img.width),
+                   max(src_img.height, res_img.height))
 
-def evaluate_text_arr(
-        text_arr: list[str],
-        img: Image.Image,
-        font: ImageFont.FreeTypeFont) -> float:
-    text_img, text_draw = new_img_draw(img.size)
-    draw_text_arr(text_draw, text_arr, font)
-    return float(1 - np.mean(ImageChops.difference(text_img, img)) / 255)
+    if src_img.size != target_size:
+        src_img = src_img.resize(target_size, Image.Resampling.LANCZOS)
+
+    if res_img.size != target_size:
+        res_img = res_img.resize(target_size, Image.Resampling.LANCZOS)
+
+    src_img = np.array(src_img.convert("L"))
+    res_img = np.array(res_img.convert("L"))
+    return -mse(src_img, res_img)
+
+def evaluate_symbol_arr(
+        src_img: Image,
+        symbol_arr: list[list[str]],
+        font: ImageFont.FreeTypeFont,
+        wh) -> float:
+    res_img = render_symbols_img(symbol_arr, font, wh=wh)
+    return similarity(src_img, res_img)
 
 
 def evaluate_symbols_id_arr(
         p_id_arr: list[int],
         symbols: list[str],
-        img: Image.Image,
+        src_img: Image.Image,
         font: ImageFont.FreeTypeFont) -> float:
-    text_arr = symbols_id_arr_to_text_arr(p_id_arr, symbols)
-    return evaluate_text_arr(text_arr, img, font)
+    symbol_arr = symbols_id_arr_to_text_arr(p_id_arr, symbols)
+    return evaluate_symbol_arr(src_img, [symbol_arr], font, src_img.size)
 
 
 def evaluate_symbols_id_population(population: list[list[int]],
@@ -98,7 +109,9 @@ def sort_population(population: list[list[int]],
                     font: ImageFont.FreeTypeFont) -> tuple[list[list[int]],
                                                            list[float]]:
     fits = evaluate_symbols_id_population(population, symbols, img, font)
-    sorted_population = sorted(zip(fits, population), reverse=True)
+    sorted_population = sorted(zip(fits, population),
+                               key=lambda f_p: f_p[0],
+                               reverse=True)
     sorted_fits = [x[0] for x in sorted_population]
     sorted_pop = [x[1] for x in sorted_population]
     return sorted_pop, sorted_fits
@@ -130,7 +143,7 @@ def calculate_longest_individual(
         bbox = img_draw.textbbox((0, 0), p, font=font)
         if bbox[2] < min_p_width:
             min_p_width = bbox[2]
-    return int(math.ceil(img.size[0] / min_p_width))
+    return int(math.floor(img.size[0] / min_p_width))
 
 
 def generate_random_line(
@@ -141,7 +154,7 @@ def generate_random_line(
     _, text_draw = new_img_draw(line.size)
     text_arr: list[str] = []
     bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
-    while line_size[0] > bbox[2]:
+    while bbox[2] < line_size[0] + 4:
         text_arr.append(symbols[random.randrange(0, len(symbols))])
         bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
     if text_arr:
@@ -153,26 +166,27 @@ def generate_greedy_line(
         line: Image.Image,
         symbols: list[str],
         font: ImageFont.FreeTypeFont) -> list[str]:
-    line_size = line.size
-    _, text_draw = new_img_draw(line_size)
+    _, text_draw = new_img_draw(line.size)
     text_arr: list[str] = []
     bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
-    while line_size[0] > bbox[2]:
+    while bbox[2] < line.size[0] + 4:
         best_c = symbols[0]
         text_arr.append(symbols[0])
-        best_c_fit = evaluate_text_arr(text_arr, line, font)
+        best_c_fit = evaluate_symbol_arr(line, [text_arr], font, line.size)
         text_arr.pop()
         for i in range(1, len(symbols)):
             text_arr.append(symbols[i])
-            fit = evaluate_text_arr(text_arr, line, font)
+            fit = evaluate_symbol_arr(line, [text_arr], font, line.size)
             if fit > best_c_fit:
                 best_c = symbols[i]
                 best_c_fit = fit
             text_arr.pop()
         text_arr.append(best_c)
         bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
+
     if text_arr:
         text_arr.pop()
+
     return text_arr
 
 

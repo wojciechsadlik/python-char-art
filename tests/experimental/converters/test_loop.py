@@ -50,13 +50,16 @@ def test_img(img_path: str, converter: Converter, params: Params) -> float:
 
         prep_img = preprocess_img(src_img_loaded, **params.preprocess_args)
 
-        if isinstance(converter, TileConverter):
+        if isinstance(converter, LineConverter):
+            res_arr = converter.process_image(prep_img)
+        elif isinstance(converter, TileConverter):
             res_arr = converter.process_image(
                 prep_img, (params.win_width, params.win_width * 2))
-        elif isinstance(converter, LineConverter):
-            res_arr = converter.process_image(prep_img)
 
-        res_img = render_symbols_img(res_arr, font).convert("L")
+        elif isinstance(converter, LineConverter):
+            res_img = render_symbols_img(res_arr, font, wh=prep_img.size)
+        res_img = render_symbols_img(res_arr, font)
+        res_img = res_img.convert("L")
         return similarity(src_img_loaded, res_img)
 
 
