@@ -61,11 +61,15 @@ class GeneticLineSearch(LineConverter):
     def line2symbols(self, line: Image.Image) -> list[str]:
         population, fits = generate_line_population(
             line, self.symbols, self.font, self.pop_count, self.include_greedy)
-        for _ in range(self.generations):
+        best_fit = fits[0]
+        for gen in range(self.generations):
             new_population = self.new_genetic_line_population(
                 self.symbols, population, self.mutation_rate, self.mutation_bw)
             for el in new_population:
                 insert_into_sorted_population(
                     population, fits, el, self.symbols, line, self.font)
             population = population[:self.pop_count]
+            if fits[0] > best_fit:
+                best_fit = fits[0]
+                print(gen, best_fit)
         return symbols_id_arr_to_text_arr(population[0], self.symbols)
