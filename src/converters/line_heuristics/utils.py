@@ -55,6 +55,8 @@ def similarity(src_img: Image, res_img: Image):
     target_size = (max(src_img.width, res_img.width),
                    max(src_img.height, res_img.height))
 
+    scale = 0.5
+    target_size = (int(target_size[0] * scale), int(target_size[1] * scale))
     if src_img.size != target_size:
         src_img = src_img.resize(target_size, Image.Resampling.LANCZOS)
 
