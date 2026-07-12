@@ -157,6 +157,7 @@ def preprocess_img(img: Image.Image,
         img.filter(ImageFilter.EDGE_ENHANCE_MORE),
         enhance_edges)
     if grayscale:
+        img = img.convert("L")
         if dither == DITHER_MODES.BAYER and quantize_colors == 2:
             img = img.convert("1", dither=Image.Dither.ORDERED)
         elif dither == DITHER_MODES.FS and quantize_colors == 2:
@@ -165,7 +166,6 @@ def preprocess_img(img: Image.Image,
             img = img.convert("1", dither=Image.Dither.NONE)
         else:
             img = quantize_grayscale(img, quantize_colors, dither)
-        img = img.convert("L")
     else:
         img = quantize_rgb(img, quantize_colors, dither)
     return img

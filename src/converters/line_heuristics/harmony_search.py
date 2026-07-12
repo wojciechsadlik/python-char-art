@@ -45,7 +45,7 @@ class HarmonyLineSearch(LineConverter):
         population, fits = generate_line_population(
             line, self.symbols, self.font, self.pop_count, self.include_greedy)
         best_fit = fits[0]
-        print(-1, best_fit)
+        # print(-1, best_fit)
         for gen in range(self.generations):
             for _ in range(self.pop_count):
                 new_harm = self.new_harmony_line(
@@ -54,6 +54,6 @@ class HarmonyLineSearch(LineConverter):
                     population, fits, new_harm, self.symbols, line, self.font)
             if fits[0] > best_fit:
                 best_fit = fits[0]
-                print(gen, best_fit)
+                # print(gen, best_fit)
 
         return symbols_id_arr_to_text_arr(population[0], self.symbols)

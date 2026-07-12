@@ -25,6 +25,6 @@ class RandomLineSearch(LineConverter):
             if current_fit > best_fit:
                 best_fit = current_fit
                 best_symbols = current_symbols
-                print(gen, best_fit)
+                # print(gen, best_fit)
 
         return best_symbols

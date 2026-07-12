@@ -10,11 +10,11 @@ class ParticleSwarmLineSearch(LineConverter):
             self,
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
-            generations: int = 50,
-            pop_count: int = 10,
-            innertion: float = 0.9,
-            cog_coeff: float = 1.5,
-            soc_coeff: float = 1.5,
+            generations: int = 100,
+            pop_count: int = 50,
+            innertion: float = 0.3,
+            cog_coeff: float = 0.9,
+            soc_coeff: float = 1.2,
             include_greedy: bool = False) -> None:
         super().__init__(symbols, font)
         self.generations = generations
@@ -35,7 +35,7 @@ class ParticleSwarmLineSearch(LineConverter):
         best_particle_pos_fit = copy.deepcopy(fits)
         best_global_pos = copy.deepcopy(particles_np[0])
         best_global_pos_fit = fits[0]
-        print(-1, best_global_pos_fit)
+        # print(-1, best_global_pos_fit)
 
         vmin = 0.5
         vmax = 0.4 * len(self.symbols)
@@ -83,7 +83,7 @@ class ParticleSwarmLineSearch(LineConverter):
                     if fits[i] > best_global_pos_fit:
                         best_global_pos = copy.deepcopy(particles_np[i])
                         best_global_pos_fit = fits[i]
-                        print(gen, best_global_pos_fit)
+                        # print(gen, best_global_pos_fit)
                 else:
                     particles_stag_counter[i] += 1
 

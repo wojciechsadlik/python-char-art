@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from itertools import repeat
 from multiprocessing import Pool, cpu_count
+import math
 
 from PIL import Image as PILImage
 from PIL.Image import Resampling, Image
@@ -10,7 +11,6 @@ from sewar.full_ref import msssim
 
 from converters.tile.base import TileConverter
 from converters.line_heuristics.base import LineConverter
-from image.array_ops import map_img_arr
 from image.processing import preprocess_img
 from rendering.image import render_symbols_img
 
@@ -25,6 +25,8 @@ class Params:
     font_path: str
     font_size: int
     win_width: int = None
+    max_width: int = None
+    max_height: int = None
 
 
 def similarity(src_img: Image, res_img: Image):
@@ -46,15 +48,32 @@ def test_img(img_path: str, converter: Converter, params: Params) -> float:
     font = truetype(params.font_path, params.font_size)
 
     with PILImage.open(img_path) as src_img:
-        src_img_loaded = src_img.copy().convert("L")
+        src_img_loaded = src_img.copy()
 
-        prep_img = preprocess_img(src_img_loaded, **params.preprocess_args)
+        prep_img = preprocess_img(src_img_loaded,
+                                  grayscale=True,
+                                  **params.preprocess_args)
 
         if isinstance(converter, LineConverter):
+            if params.max_height and params.max_width:
+                font_height_px = params.font_size * 1.333
+                font_width_px = params.font_size * 0.5
+                scale_h = params.max_height * font_height_px / prep_img.height
+                scale_w = params.max_width * font_width_px / prep_img.width
+                prep_img = preprocess_img(prep_img, scale_factor=min(scale_h, scale_w))
             res_arr = converter.process_image(prep_img)
         elif isinstance(converter, TileConverter):
+            if params.win_width:
+                win_width = params.win_width
+            elif params.max_width:
+                win_width = math.ceil(prep_img.width / params.max_width)
+
+            win_height = 2 * win_width
+            if params.max_height:
+                win_height = math.ceil(prep_img.height / params.max_height)
+
             res_arr = converter.process_image(
-                prep_img, (params.win_width, params.win_width * 2))
+                prep_img, (win_width, win_height))
 
         elif isinstance(converter, LineConverter):
             res_img = render_symbols_img(res_arr, font, wh=prep_img.size)
