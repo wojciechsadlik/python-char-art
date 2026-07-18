@@ -75,8 +75,7 @@ def quantize_grayscale(img: Image.Image,
                        dither=DITHER_MODES.NONE,
                        return_palette_map=False,
                        palette: np.ndarray = None) -> Image.Image | np.ndarray:
-    if (img.mode != "L"):
-        raise Exception("img mode should be \"L\"")
+    img = img.convert("L")
     if (img_colors <= 0):
         raise Exception("img_colors should be > 0")
     if (palette is not None and img_colors != len(palette)):
@@ -146,6 +145,7 @@ def preprocess_img(img: Image.Image,
                    dither=DITHER_MODES.NONE,
                    sharpness=1.0,
                    enhance_edges=0.0,
+                   find_edges=0.0,
                    grayscale=True):
     img = ImageOps.scale(img, scale_factor, Image.Resampling.BICUBIC)
     img = ImageEnhance.Contrast(img).enhance(contrast)
@@ -156,8 +156,11 @@ def preprocess_img(img: Image.Image,
         img,
         img.filter(ImageFilter.EDGE_ENHANCE_MORE),
         enhance_edges)
+    img = Image.blend(
+        img,
+        img.filter(ImageFilter.FIND_EDGES),
+        find_edges)
     if grayscale:
-        img = img.convert("L")
         if dither == DITHER_MODES.BAYER and quantize_colors == 2:
             img = img.convert("1", dither=Image.Dither.ORDERED)
         elif dither == DITHER_MODES.FS and quantize_colors == 2:
@@ -166,6 +169,7 @@ def preprocess_img(img: Image.Image,
             img = img.convert("1", dither=Image.Dither.NONE)
         else:
             img = quantize_grayscale(img, quantize_colors, dither)
+        img = img.convert("L")
     else:
         img = quantize_rgb(img, quantize_colors, dither)
     return img
