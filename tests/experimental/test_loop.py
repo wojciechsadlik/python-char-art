@@ -30,14 +30,19 @@ class Params:
 
 
 def similarity(src_img: Image, res_img: Image):
-    target_size = (max(src_img.width, res_img.width),
-                   max(src_img.height, res_img.height))
+    target_size = (min(src_img.width, res_img.width),
+                   min(src_img.height, res_img.height))
+    min_dim = min(target_size)
+    if min_dim < 176:
+        scale = 176 / min_dim
+        target_size = (int(target_size[0] * scale),
+                       int(target_size[1] * scale))
 
     if src_img.size != target_size:
-        src_img = src_img.resize(target_size, Resampling.LANCZOS)
+        src_img = src_img.resize(target_size, Resampling.BICUBIC)
 
     if res_img.size != target_size:
-        res_img = res_img.resize(target_size, Resampling.LANCZOS)
+        res_img = res_img.resize(target_size, Resampling.BICUBIC)
 
     src_img = np.array(src_img.convert("L"))
     res_img = np.array(res_img.convert("L"))

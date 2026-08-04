@@ -52,16 +52,14 @@ def draw_text_arr(
                             font=font, fill=255)
 
 def similarity(src_img: Image, res_img: Image):
-    target_size = (max(src_img.width, res_img.width),
-                   max(src_img.height, res_img.height))
+    target_size = (min(src_img.width, res_img.width),
+                   min(src_img.height, res_img.height))
 
-    scale = 0.5
-    target_size = (int(target_size[0] * scale), int(target_size[1] * scale))
     if src_img.size != target_size:
-        src_img = src_img.resize(target_size, Image.Resampling.LANCZOS)
+        src_img = src_img.resize(target_size, Image.Resampling.BICUBIC)
 
     if res_img.size != target_size:
-        res_img = res_img.resize(target_size, Image.Resampling.LANCZOS)
+        res_img = res_img.resize(target_size, Image.Resampling.BICUBIC)
 
     src_img = np.array(src_img.convert("L"))
     res_img = np.array(res_img.convert("L"))
