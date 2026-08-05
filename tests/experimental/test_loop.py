@@ -11,6 +11,7 @@ from sewar.full_ref import msssim
 
 from converters.tile.base import TileConverter
 from converters.line_heuristics.base import LineConverter
+from converters.img_converter import ImgConverter
 from image.processing import preprocess_img
 from rendering.image import render_symbols_img
 
@@ -59,29 +60,28 @@ def test_img(img_path: str, converter: Converter, params: Params) -> float:
                                   grayscale=True,
                                   **params.preprocess_args)
 
-        scale_h = scale_w = 1.0
+        img_converter = ImgConverter(converter)
+
         if isinstance(converter, LineConverter):
-            if params.max_width:
-                font_width_px = params.font_size * 0.5
-                scale_w = params.max_width * font_width_px / prep_img.width
-            if params.max_height:
-                font_height_px = params.font_size * 1.333
-                scale_h = params.max_height * font_height_px / prep_img.height
-            prep_img = preprocess_img(prep_img, scale_factor=min(scale_h, scale_w))
-            res_arr = converter.process_image(prep_img)
+            res_arr = img_converter.img2symbols(
+                prep_img,
+                max_cols=params.max_width,
+                max_lines=params.max_height)
             res_img = render_symbols_img(res_arr, font, wh=prep_img.size)
+
         elif isinstance(converter, TileConverter):
             win_w = params.win_width
-            if not win_w:
+            if not win_w and params.max_width:
                 win_w = math.ceil(params.max_width / prep_img.width)
             win_h = win_w * 2
-            if params.max_width:
-                scale_w = params.max_width * win_w / prep_img.width
-            if params.max_height:
-                scale_h = params.max_height * win_h / prep_img.height
-            prep_img = preprocess_img(prep_img, scale_factor=min(scale_h, scale_w))
-            res_arr = converter.process_image(prep_img, (win_w, win_h))
+
+            res_arr = img_converter.img2symbols(
+                prep_img,
+                win_wh=(win_w, win_h),
+                max_cols=params.max_width,
+                max_lines=params.max_height)
             res_img = render_symbols_img(res_arr, font)
+
         res_img = res_img.convert("L")
         return similarity(src_img_loaded, res_img)
 

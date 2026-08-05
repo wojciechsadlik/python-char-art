@@ -1,4 +1,5 @@
 import copy
+from typing import Generator
 import numpy as np
 from PIL import Image, ImageFont
 from converters.line_heuristics.base import LineConverter
@@ -11,10 +12,10 @@ class ParticleSwarmLineSearch(LineConverter):
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
             generations: int = 100,
-            pop_count: int = 50,
-            innertion: float = 0.3,
-            cog_coeff: float = 0.9,
-            soc_coeff: float = 1.2,
+            pop_count: int = 10,
+            innertion: float = 1.5,
+            cog_coeff: float = 2.0,
+            soc_coeff: float = 2.5,
             include_greedy: bool = False) -> None:
         super().__init__(symbols, font)
         self.generations = generations
@@ -24,7 +25,7 @@ class ParticleSwarmLineSearch(LineConverter):
         self.soc_coeff = soc_coeff
         self.include_greedy = include_greedy
 
-    def line2symbols(self, line: Image.Image) -> list[str]:
+    def line2symbols_lazy(self, line: Image.Image) -> Generator[list[str], None, None]:
         particles, fits = generate_line_population(
             line, self.symbols, self.font, self.pop_count, self.include_greedy)
         particles_np = np.array(particles, dtype=np.int32)
@@ -37,23 +38,37 @@ class ParticleSwarmLineSearch(LineConverter):
         best_global_pos = copy.deepcopy(particles_np[0])
         best_global_pos_fit = fits[0]
 
-        velocities = np.zeros((self.pop_count, pos_len, num_symbols), dtype=np.float32)
+        velocities = np.zeros(
+            (self.pop_count, pos_len, num_symbols), dtype=np.float32)
+
+        yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)
 
         for gen in range(self.generations):
-            innertion = self.init_innertion * (self.generations - gen) / self.generations
+            innertion = self.init_innertion * \
+                (self.generations - gen) / self.generations
             for i in range(self.pop_count):
                 if particles_stag_counter[i] > 30:
-                    particles_np[i] = np.random.randint(0, num_symbols, size=pos_len)
+                    particles_np[i] = np.random.randint(
+                        0, num_symbols, size=pos_len)
+                    velocities[i] = np.zeros(
+                        (pos_len, num_symbols), dtype=np.float32)
+                    fits[i] = evaluate_symbols_id_arr(
+                        particles_np[i].tolist(), self.symbols, line, self.font)
+                    best_particle_pos[i] = copy.deepcopy(particles_np[i])
+                    best_particle_pos_fit[i] = fits[i]
                     particles_stag_counter[i] = 0
+                    continue
 
-                r_p = np.random.random((pos_len, 1))
-                r_g = np.random.random((pos_len, 1))
+                r_p = np.random.random()
+                r_g = np.random.random()
 
-                pbest_onehot = np.zeros((pos_len, num_symbols), dtype=np.float32)
-                pbest_onehot[np.arange(pos_len), best_particle_pos[i]] = 1.0
+                pbest_onehot = np.zeros(
+                    (pos_len, num_symbols), dtype=np.float32)
+                pbest_onehot[np.arange(pos_len), best_particle_pos[i]] = r_p
 
-                gbest_onehot = np.zeros((pos_len, num_symbols), dtype=np.float32)
-                gbest_onehot[np.arange(pos_len), best_global_pos] = 1.0
+                gbest_onehot = np.zeros(
+                    (pos_len, num_symbols), dtype=np.float32)
+                gbest_onehot[np.arange(pos_len), best_global_pos] = r_g
 
                 v = innertion * velocities[i]
                 v += self.cog_coeff * r_p * pbest_onehot
@@ -65,7 +80,8 @@ class ParticleSwarmLineSearch(LineConverter):
                 probs = exp_v / np.sum(exp_v, axis=1, keepdims=True)
 
                 for j in range(pos_len):
-                    particles_np[i, j] = np.random.choice(num_symbols, p=probs[j])
+                    particles_np[i, j] = np.random.choice(
+                        num_symbols, p=probs[j])
 
                 try:
                     fits[i] = evaluate_symbols_id_arr(
@@ -76,13 +92,10 @@ class ParticleSwarmLineSearch(LineConverter):
                 if fits[i] > best_particle_pos_fit[i]:
                     best_particle_pos[i] = copy.deepcopy(particles_np[i])
                     best_particle_pos_fit[i] = fits[i]
-                    # print(gen, i, best_particle_pos_fit[i])
                     if fits[i] > best_global_pos_fit:
                         best_global_pos = copy.deepcopy(particles_np[i])
                         best_global_pos_fit = fits[i]
-                        # print(gen, best_global_pos_fit)
                 else:
                     particles_stag_counter[i] += 1
 
-        best_p_id_arr = best_global_pos.tolist()
-        return symbols_id_arr_to_text_arr(best_p_id_arr, self.symbols)
+            yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)

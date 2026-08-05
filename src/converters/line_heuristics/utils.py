@@ -1,6 +1,6 @@
 import random
 import math
-from PIL import Image, ImageDraw, ImageChops, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from sewar.full_ref import mse
 
@@ -13,23 +13,6 @@ def new_img_draw(size: tuple[int, int],
     img = Image.new("L", size, fill)
     draw = ImageDraw.Draw(img)
     return img, draw
-
-
-def split_lines(img: Image.Image,
-                symbols: list[str],
-                font: ImageFont.FreeTypeFont) -> list[Image.Image]:
-    _, draw = new_img_draw(img.size)
-    bbox = draw.textbbox((0, 0), ''.join(symbols), font=font)
-    line_width = img.size[0]
-    line_height = bbox[3]
-    lines: list[Image.Image] = []
-    top = 0
-    bottom = line_height
-    while img.size[1] - top > line_height:
-        lines.append(img.crop((0, top, line_width, bottom)))
-        top = bottom
-        bottom = top + line_height
-    return lines
 
 
 def symbols_id_arr_to_text_arr(
@@ -51,7 +34,8 @@ def draw_text_arr(
     img_draw.multiline_text((0, 0), ''.join(text_arr),
                             font=font, fill=255)
 
-def similarity(src_img: Image, res_img: Image):
+
+def similarity(src_img: Image.Image, res_img: Image.Image) -> float:
     target_size = (min(src_img.width, res_img.width),
                    min(src_img.height, res_img.height))
 
@@ -61,12 +45,13 @@ def similarity(src_img: Image, res_img: Image):
     if res_img.size != target_size:
         res_img = res_img.resize(target_size, Image.Resampling.BICUBIC)
 
-    src_img = np.array(src_img.convert("L"))
-    res_img = np.array(res_img.convert("L"))
-    return -mse(src_img, res_img)
+    src_arr = np.array(src_img.convert("L"))
+    res_arr = np.array(res_img.convert("L"))
+    return -mse(src_arr, res_arr)
+
 
 def evaluate_symbol_arr(
-        src_img: Image,
+        src_img: Image.Image,
         symbol_arr: list[list[str]],
         font: ImageFont.FreeTypeFont,
         wh) -> float:
