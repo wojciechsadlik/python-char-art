@@ -29,7 +29,7 @@ class ImgConverter:
     def scale_img(
         self,
         img: Image.Image,
-        win_wh: Optional[tuple[int, int]] = None,
+        win_wh: Optional[tuple[int, int]] = (1, 2),
         max_cols: Optional[int] = None,
         max_lines: Optional[int] = None,
     ) -> Image.Image:
@@ -50,11 +50,8 @@ class ImgConverter:
                 scale_h = (max_lines * line_height_px) / img.height
 
         elif isinstance(self.converter, TileConverter):
-            if win_wh is None:
-                raise ValueError(
-                    "win_wh is required to scale for TileConverter.")
-
-            win_w, win_h = win_wh
+            win_w = win_wh[0]
+            win_h = win_wh[1]
             if max_cols is not None:
                 scale_w = (max_cols * win_w) / img.width
             if max_lines is not None:
@@ -70,7 +67,7 @@ class ImgConverter:
     def img2symbols_lazy(
         self,
         img: Image.Image,
-        win_wh: Optional[tuple[int, int]] = None,
+        win_wh: Optional[tuple[int, int]] = (1, 2),
         max_cols: Optional[int] = None,
         max_lines: Optional[int] = None,
         gens_per_step: int = 5,
@@ -81,11 +78,6 @@ class ImgConverter:
         img_arr = np.array(img)
 
         if isinstance(self.converter, TileConverter):
-            if win_wh is None:
-                raise ValueError(
-                    "win_wh (width, height) is required for TileConverter."
-                )
-
             symbols_grid = map_img_arr(
                 img_arr,
                 width=win_wh[0],
@@ -135,7 +127,7 @@ class ImgConverter:
     def img2symbols(
         self,
         img: Image.Image,
-        win_wh: Optional[tuple[int, int]] = None,
+        win_wh: Optional[tuple[int, int]] = (1, 2),
         max_cols: Optional[int] = None,
         max_lines: Optional[int] = None,
     ) -> list[list[str]]:

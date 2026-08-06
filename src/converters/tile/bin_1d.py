@@ -54,7 +54,7 @@ class Tile2Symb1dBin(TileConverter):
     def __init__(self,
                  symbols: list[str],
                  font: FreeTypeFont,
-                 bins=12,
+                 bins=16,
                  bg_color=0,
                  fg_color=255,
                  img_colors=256):
