@@ -2,7 +2,7 @@ import copy
 from typing import Generator
 import numpy as np
 from PIL import Image, ImageFont
-from converters.line_heuristics.base import LineConverter
+from converters.line_heuristics.line_converter import LineConverter
 from converters.line_heuristics.utils import generate_line_population, evaluate_symbols_id_arr, symbols_id_arr_to_text_arr
 
 
@@ -17,7 +17,8 @@ class ParticleSwarmLineSearch(LineConverter):
             cog_coeff: float = 2.0,
             soc_coeff: float = 2.5,
             include_greedy: bool = False) -> None:
-        super().__init__(symbols, font)
+        self.symbols = symbols
+        self.font = font
         self.generations = generations
         self.pop_count = pop_count
         self.init_innertion = innertion
@@ -25,7 +26,7 @@ class ParticleSwarmLineSearch(LineConverter):
         self.soc_coeff = soc_coeff
         self.include_greedy = include_greedy
 
-    def line2symbols_lazy(self, line: Image.Image) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(self, line: Image.Image, **kwargs) -> Generator[list[str], None, None]:
         particles, fits = generate_line_population(
             line, self.symbols, self.font, self.pop_count, self.include_greedy)
         particles_np = np.array(particles, dtype=np.int32)

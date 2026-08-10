@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import zoom
 
-from converters.tile.base import TileConverter
+from converters.tile.tile_converter import TileConverter
 
 
 BRAILLE_UNICODE_START = 0x2800

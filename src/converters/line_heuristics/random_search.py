@@ -1,6 +1,6 @@
 from typing import Generator
 from PIL import Image, ImageFont
-from converters.line_heuristics.base import LineConverter
+from converters.line_heuristics.line_converter import LineConverter
 from converters.line_heuristics.utils import generate_random_line, evaluate_symbol_arr
 
 
@@ -10,10 +10,11 @@ class RandomLineSearch(LineConverter):
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
             generations: int = 100) -> None:
-        super().__init__(symbols, font)
+        self.symbols = symbols
+        self.font = font
         self.generations = generations
 
-    def line2symbols_lazy(self, line: Image.Image) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(self, line: Image.Image, **kwargs) -> Generator[list[str], None, None]:
         best_fit = -float('inf')
         best_symbols: list[str] = []
 

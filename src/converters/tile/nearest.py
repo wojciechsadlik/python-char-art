@@ -3,7 +3,7 @@ import numpy as np
 from PIL.ImageFont import FreeTypeFont
 from scipy.ndimage import zoom
 
-from converters.tile.base import TileConverter
+from converters.tile.tile_converter import TileConverter
 from palette.symbol2value import make_symbol2value_map
 
 

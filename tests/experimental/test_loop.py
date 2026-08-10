@@ -9,8 +9,8 @@ from PIL.ImageFont import truetype
 import numpy as np
 from sewar.full_ref import msssim
 
-from converters.tile.base import TileConverter
-from converters.line_heuristics.base import LineConverter
+from converters.tile.tile_converter import TileConverter
+from converters.line_heuristics.line_converter import LineConverter
 from converters.img_converter import ImgConverter
 from image.processing import preprocess_img
 from rendering.image import render_symbols_img

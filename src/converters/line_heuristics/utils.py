@@ -7,6 +7,20 @@ from sewar.full_ref import mse
 from rendering.image import render_symbols_img
 
 
+def get_line_height(symbols: list[str], font: ImageFont.FreeTypeFont) -> int:
+    img = Image.new("L", (1, 1))
+    draw = ImageDraw.Draw(img)
+    bbox = draw.textbbox((0, 0), "".join(symbols), font=font)
+    return bbox[3] - bbox[1]
+
+
+def get_char_width(font: ImageFont.FreeTypeFont) -> float:
+    img = Image.new("L", (1, 1))
+    draw = ImageDraw.Draw(img)
+    bbox = draw.textbbox((0, 0), "M", font=font)
+    return bbox[2] - bbox[0]
+
+
 def new_img_draw(size: tuple[int, int],
                  fill: int = 0) -> tuple[Image.Image,
                                          ImageDraw.ImageDraw]:

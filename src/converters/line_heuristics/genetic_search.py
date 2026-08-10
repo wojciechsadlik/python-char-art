@@ -1,7 +1,7 @@
 import random
 from typing import Generator
 from PIL import Image, ImageFont
-from converters.line_heuristics.base import LineConverter
+from converters.line_heuristics.line_converter import LineConverter
 from converters.line_heuristics.utils import generate_line_population, insert_into_sorted_population, symbols_id_arr_to_text_arr
 
 
@@ -15,7 +15,8 @@ class GeneticLineSearch(LineConverter):
             mutation_rate: float = 0.3,
             mutation_bw: int = 2,
             include_greedy: bool = False) -> None:
-        super().__init__(symbols, font)
+        self.symbols = symbols
+        self.font = font
         self.generations = generations
         self.pop_count = pop_count
         self.mutation_rate = mutation_rate
@@ -59,7 +60,7 @@ class GeneticLineSearch(LineConverter):
             new_population.append(new2)
         return new_population
 
-    def line2symbols_lazy(self, line: Image.Image) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(self, line: Image.Image, **kwargs) -> Generator[list[str], None, None]:
         population, fits = generate_line_population(
             line, self.symbols, self.font, self.pop_count, self.include_greedy)
 
