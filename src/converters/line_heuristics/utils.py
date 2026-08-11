@@ -1,9 +1,12 @@
 import random
 import math
+from typing import Optional
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from sewar.full_ref import mse
 
+from converters.tile.tile_converter import TileConverter
+from image.array_ops import slice_horizontally
 from rendering.image import render_symbols_img
 
 
@@ -145,6 +148,16 @@ def calculate_longest_individual(
     return int(math.floor(img.size[0] / min_p_width))
 
 
+def generate_tile_line(
+        line: Image.Image,
+        tile_converter: TileConverter,
+        col_width: Optional[int] = None) -> list[str]:
+    col_width = col_width or line.height // 2
+    line_arr = np.array(line)
+    tile_arrs = slice_horizontally(line_arr, col_width)
+    return [tile_converter.tile2symbol(tile) for tile in tile_arrs]
+
+
 def generate_random_line(
         line: Image.Image,
         symbols: list[str],
@@ -193,19 +206,32 @@ def generate_line_population(line: Image.Image,
                              symbols: list[str],
                              font: ImageFont.FreeTypeFont,
                              count: int,
-                             include_greedy: bool = False
+                             include_greedy: bool = False,
+                             tile_converter: Optional[TileConverter] = None,
+                             col_width: Optional[int] = None
                              ) -> tuple[list[list[int]], list[float]]:
     population: list[list[int]] = []
+
+    if tile_converter is not None:
+        population.append(
+            text_arr_to_symbols_id_arr(
+                generate_tile_line(line, tile_converter, col_width),
+                symbols
+            )
+        )
+
     if include_greedy:
         population.append(
             text_arr_to_symbols_id_arr(
                 generate_greedy_line(
                     line, symbols, font), symbols))
+
     for _ in range(len(population), count):
         population.append(
             text_arr_to_symbols_id_arr(
                 generate_random_line(
                     line, symbols, font), symbols))
+
     align_population_lengths(
         population,
         calculate_longest_individual(

@@ -1,8 +1,14 @@
 import random
-from typing import Generator
+from typing import Generator, Optional
 from PIL import Image, ImageFont
+
 from converters.line_heuristics.line_converter import LineConverter
-from converters.line_heuristics.utils import generate_line_population, insert_into_sorted_population, symbols_id_arr_to_text_arr
+from converters.line_heuristics.utils import (
+    generate_line_population,
+    insert_into_sorted_population,
+    symbols_id_arr_to_text_arr,
+)
+from converters.tile.tile_converter import TileConverter
 
 
 class HarmonyLineSearch(LineConverter):
@@ -15,7 +21,9 @@ class HarmonyLineSearch(LineConverter):
             mem_rate: float = 0.8,
             pa_rate: float = 0.3,
             pa: int = 2,
-            include_greedy: bool = False) -> None:
+            include_greedy: bool = False,
+            tile_converter: Optional[TileConverter] = None) -> None:
+        super().__init__(tile_converter=tile_converter)
         self.symbols = symbols
         self.font = font
         self.generations = generations
@@ -44,9 +52,16 @@ class HarmonyLineSearch(LineConverter):
                 new_harm.append(random.randrange(0, len(symbols)))
         return new_harm
 
-    def line2symbols_lazy(self, line: Image.Image, **kwargs) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(self, line: Image.Image, col_width: Optional[int] = None, **kwargs) -> Generator[list[str], None, None]:
         population, fits = generate_line_population(
-            line, self.symbols, self.font, self.pop_count, self.include_greedy)
+            line,
+            self.symbols,
+            self.font,
+            self.pop_count,
+            include_greedy=self.include_greedy,
+            tile_converter=self.tile_converter,
+            col_width=col_width,
+        )
 
         yield symbols_id_arr_to_text_arr(population[0], self.symbols)
 

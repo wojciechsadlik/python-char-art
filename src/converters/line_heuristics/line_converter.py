@@ -13,7 +13,10 @@ class LineConverter:
     ) -> None:
         self.tile_converter = tile_converter
 
-    def tile_line(self, line: Image.Image, col_width: Optional[int]) -> list[str]:
+    def tile_line(self,
+                  line: Image.Image,
+                  col_width: Optional[int] = None
+                  ) -> list[str]:
         if self.tile_converter is None:
             raise ValueError("No TileConverter assigned to LineConverter.")
         col_width = col_width or line.height // 2
@@ -23,8 +26,8 @@ class LineConverter:
 
     def line2symbols_lazy(self,
                           line: Image.Image,
-                          col_width: Optional[int]
-                        ) -> Generator[list[str], None, None]:
+                          col_width: Optional[int] = None
+                          ) -> Generator[list[str], None, None]:
         if self.tile_converter is not None:
             yield self.tile_line(line, col_width=col_width)
         else:
@@ -34,8 +37,8 @@ class LineConverter:
 
     def line2symbols(self, 
                      line: Image.Image,
-                     col_width: Optional[int]
-                    ) -> list[str]:
+                     col_width: Optional[int] = None
+                     ) -> list[str]:
         best_symbols: list[str] = []
         for symbols in self.line2symbols_lazy(line, col_width=col_width):
             best_symbols = symbols
