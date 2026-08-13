@@ -3,6 +3,7 @@ from PIL import Image, ImageFont
 
 from converters.line_heuristics.line_converter import LineConverter
 from converters.line_heuristics.utils import evaluate_symbol_arr, new_img_draw
+from palette.symbol2value import symbols_sorted
 
 
 def generate_greedy_line(
@@ -41,7 +42,7 @@ class GreedyLineSearch(LineConverter):
     ) -> None:
         super().__init__()
         self.font = font
-        self.symbols = symbols
+        self.symbols = symbols_sorted(symbols, font)
 
     def line2symbols_lazy(
         self, line: Image.Image, **kwargs

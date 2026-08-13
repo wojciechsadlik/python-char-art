@@ -9,6 +9,7 @@ from converters.line_heuristics.utils import (
     symbols_id_arr_to_text_arr,
 )
 from converters.tile.tile_converter import TileConverter
+from palette.symbol2value import symbols_sorted
 
 
 class HarmonyLineSearch(LineConverter):
@@ -20,17 +21,19 @@ class HarmonyLineSearch(LineConverter):
             pop_count: int = 100,
             mem_rate: float = 0.8,
             pa_rate: float = 0.3,
-            pa: int = 2,
+            pa: Optional[int] = None,
             include_greedy: bool = False,
             tile_converter: Optional[TileConverter] = None) -> None:
         super().__init__(tile_converter=tile_converter)
-        self.symbols = symbols
+        self.symbols = symbols_sorted(symbols, font)
         self.font = font
         self.generations = generations
         self.pop_count = pop_count
         self.mem_rate = mem_rate
         self.pa_rate = pa_rate
         self.pa = pa
+        if pa is None:
+            self.pa = max(len(symbols) // 8, 2)
         self.include_greedy = include_greedy
 
     @staticmethod

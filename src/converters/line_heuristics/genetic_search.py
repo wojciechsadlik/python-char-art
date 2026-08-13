@@ -9,6 +9,7 @@ from converters.line_heuristics.utils import (
     symbols_id_arr_to_text_arr,
 )
 from converters.tile.tile_converter import TileConverter
+from palette.symbol2value import symbols_sorted
 
 
 class GeneticLineSearch(LineConverter):
@@ -23,7 +24,7 @@ class GeneticLineSearch(LineConverter):
             include_greedy: bool = False,
             tile_converter: Optional[TileConverter] = None) -> None:
         super().__init__(tile_converter=tile_converter)
-        self.symbols = symbols
+        self.symbols = symbols_sorted(symbols, font)
         self.font = font
         self.generations = generations
         self.pop_count = pop_count

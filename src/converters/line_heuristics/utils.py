@@ -56,8 +56,8 @@ def similarity(src_img: Image.Image, res_img: Image.Image) -> float:
     if res_img.size != target_size:
         res_img = res_img.resize(target_size, Image.Resampling.BICUBIC)
 
-    src_arr = np.array(src_img.convert("L"))
-    res_arr = np.array(res_img.convert("L"))
+    src_arr = np.array(src_img.convert("L")) / 255
+    res_arr = np.array(res_img.convert("L")) / 255
     return -mse(src_arr, res_arr)
 
 
@@ -183,28 +183,27 @@ def generate_line_population(
     tile_converter: Optional[TileConverter] = None,
     col_width: Optional[int] = None,
 ) -> tuple[list[list[int]], list[float]]:
-    from converters.line_heuristics.greedy import generate_greedy_line
-
     population: list[list[int]] = []
 
-    if tile_converter is not None:
-        population.append(
-            text_arr_to_symbols_id_arr(
-                generate_tile_line(line, tile_converter, col_width), symbols
-            )
-        )
-
     if include_greedy:
+        from converters.line_heuristics.greedy import generate_greedy_line
         population.append(
             text_arr_to_symbols_id_arr(
                 generate_greedy_line(line, symbols, font), symbols)
         )
 
     for _ in range(len(population), count):
-        population.append(
-            text_arr_to_symbols_id_arr(
-                generate_random_line(line, symbols, font), symbols)
-        )
+        if tile_converter is not None:
+            population.append(
+                text_arr_to_symbols_id_arr(
+                    generate_tile_line(line, tile_converter, col_width), symbols
+                )
+            )
+        else:
+            population.append(
+                text_arr_to_symbols_id_arr(
+                    generate_random_line(line, symbols, font), symbols)
+            )
 
     align_population_lengths(
         population,
