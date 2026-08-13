@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def symbol_arr_to_str(symbol_arr: list[list[str]]) -> str:
-    return "\n".join("".join(row) for row in symbol_arr) + "\n"
+    return "\n".join("".join(row) for row in symbol_arr)
 
 
 def render_symbols_img(
@@ -21,6 +21,6 @@ def render_symbols_img(
 
     img = Image.new("RGB", (wh[0], wh[1]), bg_color)
     ImageDraw.Draw(img).multiline_text(
-        (0, 0), text=text, font=font, fill=fg_color)
+        (wh[0] / 2, wh[1] / 2), anchor="mm", text=text, font=font, fill=fg_color)
 
     return img
