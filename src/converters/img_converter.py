@@ -1,9 +1,13 @@
+import logging
 from typing import Generator, Optional
 from PIL import Image
 import numpy as np
 
+from diagnostics.artifact_manager import get_artifact_manager
 from image.array_ops import slice_vertically
 from converters.line_heuristics.line_converter import LineConverter
+
+logger = logging.getLogger(__name__)
 
 
 class ImgConverter:
@@ -24,8 +28,7 @@ class ImgConverter:
         if max_cols is None and max_lines is None:
             return img
 
-        scale_w = 1.0
-        scale_h = 1.0
+        scale_w, scale_h = 1.0, 1.0
 
         if col_width is None and line_height is not None:
             col_width = line_height // 2
@@ -43,6 +46,11 @@ class ImgConverter:
         new_w = int(img.width * scale_factor)
         new_h = int(img.height * scale_factor)
 
+        logger.info(
+            "Rescaling image from %s to %s (scale factor: %.3f)",
+            img.size, (new_w, new_h), scale_factor
+        )
+
         return img.resize((new_w, new_h), Image.Resampling.BICUBIC)
 
     def img2symbols_lazy(
@@ -54,11 +62,18 @@ class ImgConverter:
         line_height: Optional[int] = None,
         gens_per_step: int = 5,
     ) -> Generator[list[list[str]], None, None]:
-        img = self.scale_img(img,
-                             max_cols=max_cols,
-                             col_width=col_width,
-                             max_lines=max_lines,
-                             line_height=line_height)
+        logger.info(
+            "Scaling and slicing image. Constraints: max_cols=%s, col_width=%s, max_lines=%s, line_height=%s",
+            max_cols, col_width, max_lines, line_height
+        )
+
+        img = self.scale_img(
+            img,
+            max_cols=max_cols,
+            col_width=col_width,
+            max_lines=max_lines,
+            line_height=line_height
+        )
         img_arr = np.array(img)
 
         line_arrs = slice_vertically(img_arr, line_height)
@@ -73,6 +88,7 @@ class ImgConverter:
         active_mask = [True] * len(lines)
 
         for i, gen in enumerate(line_gens):
+            get_artifact_manager().set_line(i, src_line=lines[i])
             try:
                 latest_image_state[i] = next(gen)
             except StopIteration:
@@ -84,6 +100,8 @@ class ImgConverter:
             for i, gen in enumerate(line_gens):
                 if not active_mask[i]:
                     continue
+
+                get_artifact_manager().set_line(i, src_line=lines[i])
 
                 for _ in range(gens_per_step):
                     try:

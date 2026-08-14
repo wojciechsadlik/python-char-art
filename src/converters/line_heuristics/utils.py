@@ -1,3 +1,4 @@
+import logging
 import math
 import random
 from typing import Optional
@@ -5,9 +6,12 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from sewar.full_ref import mse
 
+from diagnostics.artifact_manager import get_artifact_manager
 from converters.tile.tile_converter import TileConverter
 from image.array_ops import slice_horizontally
 from rendering.image import render_symbols_img
+
+logger = logging.getLogger(__name__)
 
 
 def get_line_height(symbols: list[str], font: ImageFont.FreeTypeFont) -> int:
@@ -94,8 +98,9 @@ def align_population_lengths(
     population: list[list[int]],
     length: int,
     symbols_length: int = 1,
-    fill_id: int = None,
+    fill_id: Optional[int] = None,
 ) -> None:
+    logger.debug("Aligning population from length %d to target length %d", len(population[0]), length)
     for i in range(len(population)):
         while len(population[i]) < length:
             if fill_id is not None:
@@ -112,9 +117,23 @@ def sort_population(
 ) -> tuple[list[list[int]], list[float]]:
     fits = evaluate_symbols_id_population(population, symbols, img, font)
     sorted_population = sorted(
-        zip(fits, population), key=lambda f_p: f_p[0], reverse=True)
+        zip(fits, population), key=lambda f_p: f_p[0], reverse=True
+    )
     sorted_fits = [x[0] for x in sorted_population]
     sorted_pop = [x[1] for x in sorted_population]
+
+    best_line = symbols_id_arr_to_text_arr(sorted_pop[0], symbols)
+    logger.debug("Initial Best Fitness: %.4f | Line: %s", sorted_fits[0], "".join(best_line))
+
+    manager = get_artifact_manager()
+    if manager.debug:
+        manager.save_current_best(
+            symbol_line=best_line,
+            font=font,
+            size=img.size,
+            fitness=sorted_fits[0],
+        )
+
     return sorted_pop, sorted_fits
 
 
@@ -129,6 +148,19 @@ def insert_into_sorted_population(
     new_fit = evaluate_symbols_id_arr(new_el, symbols, img, font)
     for i, f in enumerate(fits):
         if new_fit > f:
+            if i == 0:
+                line = symbols_id_arr_to_text_arr(new_el, symbols)
+                logger.debug("New Best: Fitness %.4f | Line: %s", new_fit, "".join(line))
+
+                manager = get_artifact_manager()
+                if manager.debug:
+                    manager.save_current_best(
+                        symbol_line=line,
+                        font=font,
+                        size=img.size,
+                        fitness=new_fit,
+                    )
+
             fits.insert(i, new_fit)
             fits.pop()
             population.insert(i, new_el)

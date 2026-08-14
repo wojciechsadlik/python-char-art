@@ -7,6 +7,9 @@ from image.processing import preprocess_img, DITHER_MODES
 from converters.tile.bin_2d import Tile2Symb2dBin
 from converters.line_heuristics.harmony_search import HarmonyLineSearch
 from converters.img_converter import ImgConverter
+from diagnostics.artifact_manager import get_artifact_manager
+
+get_artifact_manager(debug=True)
 
 
 def main():

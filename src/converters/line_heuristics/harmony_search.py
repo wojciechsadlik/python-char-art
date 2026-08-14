@@ -1,7 +1,9 @@
+import logging
 import random
 from typing import Generator, Optional
 from PIL import Image, ImageFont
 
+from diagnostics.artifact_manager import get_artifact_manager
 from converters.line_heuristics.line_converter import LineConverter
 from converters.line_heuristics.utils import (
     generate_line_population,
@@ -10,6 +12,8 @@ from converters.line_heuristics.utils import (
 )
 from converters.tile.tile_converter import TileConverter
 from palette.symbol2value import symbols_sorted
+
+logger = logging.getLogger(__name__)
 
 
 class HarmonyLineSearch(LineConverter):
@@ -31,9 +35,7 @@ class HarmonyLineSearch(LineConverter):
         self.pop_count = pop_count
         self.mem_rate = mem_rate
         self.pa_rate = pa_rate
-        self.pa = pa
-        if pa is None:
-            self.pa = max(len(symbols) // 8, 2)
+        self.pa = pa if pa is not None else max(len(symbols) // 8, 2)
         self.include_greedy = include_greedy
 
     @staticmethod
@@ -68,11 +70,18 @@ class HarmonyLineSearch(LineConverter):
 
         yield symbols_id_arr_to_text_arr(population[0], self.symbols)
 
-        for _ in range(self.generations):
+        for gen in range(self.generations):
+            if manager := get_artifact_manager():
+                manager.current_gen = gen
+
+            logger.info("Generation %d/%d", gen + 1, self.generations)
+
             for _ in range(self.pop_count):
                 new_harm = self.new_harmony_line(
-                    self.symbols, population, self.mem_rate, self.pa_rate, self.pa)
+                    self.symbols, population, self.mem_rate, self.pa_rate, self.pa
+                )
                 insert_into_sorted_population(
-                    population, fits, new_harm, self.symbols, line, self.font)
+                    population, fits, new_harm, self.symbols, line, self.font
+                )
 
             yield symbols_id_arr_to_text_arr(population[0], self.symbols)
