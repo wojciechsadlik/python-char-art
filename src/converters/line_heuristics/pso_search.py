@@ -10,6 +10,7 @@ from converters.line_heuristics.utils import (
     symbols_id_arr_to_text_arr,
 )
 from converters.tile.tile_converter import TileConverter
+from diagnostics.artifact_manager import get_artifact_manager
 from palette.symbol2value import symbols_sorted
 
 
@@ -19,10 +20,12 @@ class ParticleSwarmLineSearch(LineConverter):
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
             generations: int = 100,
-            pop_count: int = 10,
-            innertion: float = 1.5,
+            pop_count: int = 20,
+            innertion: float = 1.0,
             cog_coeff: float = 2.0,
-            soc_coeff: float = 2.5,
+            soc_coeff: float = 2.0,
+            noise_std: float = 1.0,
+            confidence_thresh: float = 0.95,
             include_greedy: bool = False,
             tile_converter: Optional[TileConverter] = None) -> None:
         super().__init__(tile_converter=tile_converter)
@@ -33,6 +36,8 @@ class ParticleSwarmLineSearch(LineConverter):
         self.init_innertion = innertion
         self.cog_coeff = cog_coeff
         self.soc_coeff = soc_coeff
+        self.noise_std = noise_std
+        self.confidence_thresh = confidence_thresh
         self.include_greedy = include_greedy
 
     def line2symbols_lazy(self,
@@ -50,7 +55,6 @@ class ParticleSwarmLineSearch(LineConverter):
             col_width=col_width,
         )
         particles_np = np.array(particles, dtype=np.int32)
-        particles_stag_counter = [0] * self.pop_count
         pos_len = len(particles_np[0])
         num_symbols = len(self.symbols)
 
@@ -65,21 +69,10 @@ class ParticleSwarmLineSearch(LineConverter):
         yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)
 
         for gen in range(self.generations):
+            get_artifact_manager().current_gen = gen
             innertion = self.init_innertion * \
                 (self.generations - gen) / self.generations
             for i in range(self.pop_count):
-                if particles_stag_counter[i] > 30:
-                    particles_np[i] = np.random.randint(
-                        0, num_symbols, size=pos_len)
-                    velocities[i] = np.zeros(
-                        (pos_len, num_symbols), dtype=np.float32)
-                    fits[i] = evaluate_symbols_id_arr(
-                        particles_np[i].tolist(), self.symbols, line, self.font)
-                    best_particle_pos[i] = copy.deepcopy(particles_np[i])
-                    best_particle_pos_fit[i] = fits[i]
-                    particles_stag_counter[i] = 0
-                    continue
-
                 r_p = np.random.random()
                 r_g = np.random.random()
 
@@ -94,11 +87,19 @@ class ParticleSwarmLineSearch(LineConverter):
                 v = innertion * velocities[i]
                 v += self.cog_coeff * r_p * pbest_onehot
                 v += self.soc_coeff * r_g * gbest_onehot
+
+                if self.noise_std > 0:
+                    v += np.random.normal(0.0, self.noise_std, size=v.shape)
+
                 velocities[i] = v
 
                 v_shifted = v - np.max(v, axis=1, keepdims=True)
                 exp_v = np.exp(v_shifted)
                 probs = exp_v / np.sum(exp_v, axis=1, keepdims=True)
+
+                if np.mean(np.max(probs, axis=1)) > self.confidence_thresh:
+                    velocities[i] = np.zeros((pos_len, num_symbols), dtype=np.float32)
+                    probs = np.full((pos_len, num_symbols), 1.0 / num_symbols, dtype=np.float32)
 
                 for j in range(pos_len):
                     particles_np[i, j] = np.random.choice(
@@ -116,7 +117,5 @@ class ParticleSwarmLineSearch(LineConverter):
                     if fits[i] > best_global_pos_fit:
                         best_global_pos = copy.deepcopy(particles_np[i])
                         best_global_pos_fit = fits[i]
-                else:
-                    particles_stag_counter[i] += 1
 
             yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)

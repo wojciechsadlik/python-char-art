@@ -59,7 +59,7 @@ def main():
         symbols=symbols,
         font=font,
         generations=args.generations,
-        pop_count=10,
+        pop_count=20,
         tile_converter=tile_converter
     )
 

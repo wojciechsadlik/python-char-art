@@ -14,7 +14,7 @@ class ArtifactManager:
         self,
         base_dir: str = "outputs",
         run_name: Optional[str] = None,
-        debug: bool = True,
+        debug: bool = False,
     ) -> None:
         self.debug = debug
         self.current_line: int = 0
@@ -41,7 +41,7 @@ class ArtifactManager:
             src_line.save(src_path)
             logger.debug("Saved source line snippet: %s", src_path)
 
-    def save_current_best(
+    def save_line(
         self,
         symbol_line: list[str],
         font: ImageFont.FreeTypeFont,
@@ -69,7 +69,7 @@ _instance: Optional[ArtifactManager] = None
 def get_artifact_manager(
     base_dir: str = "outputs",
     run_name: Optional[str] = None,
-    debug: bool = True,
+    debug: bool = False,
     reset: bool = False,
 ) -> ArtifactManager:
     global _instance

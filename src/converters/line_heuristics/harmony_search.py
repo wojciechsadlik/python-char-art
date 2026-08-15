@@ -22,9 +22,9 @@ class HarmonyLineSearch(LineConverter):
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
             generations: int = 50,
-            pop_count: int = 100,
-            mem_rate: float = 0.8,
-            pa_rate: float = 0.3,
+            pop_count: int = 10,
+            mem_rate: float = 0.9,
+            pa_rate: float = 0.1,
             pa: Optional[int] = None,
             include_greedy: bool = False,
             tile_converter: Optional[TileConverter] = None) -> None:
@@ -71,8 +71,7 @@ class HarmonyLineSearch(LineConverter):
         yield symbols_id_arr_to_text_arr(population[0], self.symbols)
 
         for gen in range(self.generations):
-            if manager := get_artifact_manager():
-                manager.current_gen = gen
+            get_artifact_manager().current_gen = gen
 
             logger.info("Generation %d/%d", gen + 1, self.generations)
 

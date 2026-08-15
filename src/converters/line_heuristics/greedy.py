@@ -2,34 +2,31 @@ from typing import Generator
 from PIL import Image, ImageFont
 
 from converters.line_heuristics.line_converter import LineConverter
-from converters.line_heuristics.utils import evaluate_symbol_arr, new_img_draw
+from converters.line_heuristics.utils import evaluate_symbol_arr, new_img_draw, generate_random_line
 from palette.symbol2value import symbols_sorted
 
 
 def generate_greedy_line(
-        line: Image.Image,
-        symbols: list[str],
-        font: ImageFont.FreeTypeFont) -> list[str]:
-    _, text_draw = new_img_draw(line.size)
-    text_arr: list[str] = []
-    bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
-    while bbox[2] < line.size[0] + 4:
-        best_c = symbols[0]
-        text_arr.append(symbols[0])
-        best_c_fit = evaluate_symbol_arr(line, [text_arr], font, line.size)
-        text_arr.pop()
-        for i in range(1, len(symbols)):
-            text_arr.append(symbols[i])
-            fit = evaluate_symbol_arr(line, [text_arr], font, line.size)
-            if fit > best_c_fit:
-                best_c = symbols[i]
-                best_c_fit = fit
-            text_arr.pop()
-        text_arr.append(best_c)
-        bbox = text_draw.textbbox((0, 0), ''.join(text_arr), font=font)
+    line: Image.Image, symbols: list[str], font: ImageFont.FreeTypeFont
+) -> list[str]:
+    text_arr: list[str] = generate_random_line(line, symbols, font)
 
-    if text_arr:
-        text_arr.pop()
+    for i in range(len(text_arr)):
+        best_char = text_arr[i]
+        best_fit = evaluate_symbol_arr(line, [text_arr], font, line.size)
+
+        for sym in symbols:
+            if sym == best_char:
+                continue
+
+            text_arr[i] = sym
+            fit = evaluate_symbol_arr(line, [text_arr], font, line.size)
+
+            if fit > best_fit:
+                best_fit = fit
+                best_char = sym
+
+        text_arr[i] = best_char
 
     return text_arr
 
