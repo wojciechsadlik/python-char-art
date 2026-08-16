@@ -4,7 +4,7 @@ import bisect
 import random
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from rendering.ansi_colors_parser import strip_ansi_codes, parse_ansi_colors
 from rendering.ansi_colorizer import reset_code, set_char_fg_256_color_code, set_char_bg_256_color_code
@@ -129,6 +129,8 @@ def make_symbol2value_map(
             font=font,
             fill=sym_info["fg_color"],
             anchor='mm')
+
+        img = img.filter(ImageFilter.BoxBlur(radius=2))
 
         if grayscale:
             img = img.convert("L")
