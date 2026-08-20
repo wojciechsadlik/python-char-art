@@ -12,6 +12,10 @@ class LineConverter:
         tile_converter: Optional[TileConverter] = None
     ) -> None:
         self.tile_converter = tile_converter
+        self.current_candidates: list[list[str]] = []
+
+    def get_candidates(self) -> list[list[str]]:
+        return self.current_candidates
 
     def tile_line(self,
                   line: Image.Image,
@@ -29,7 +33,9 @@ class LineConverter:
                           col_width: Optional[int] = None
                           ) -> Generator[list[str], None, None]:
         if self.tile_converter is not None:
-            yield self.tile_line(line, col_width=col_width)
+            res = self.tile_line(line, col_width=col_width)
+            self.current_candidates = [res]
+            yield res
         else:
             raise NotImplementedError(
                 "override or provide a tile_converter"

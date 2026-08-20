@@ -80,7 +80,8 @@ class GeneticLineSearch(LineConverter):
             col_width=col_width,
         )
 
-        yield symbols_id_arr_to_text_arr(population[0], self.symbols)
+        self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in population[:4]]
+        yield self.current_candidates[0]
 
         for _ in range(self.generations):
             new_population = self.new_genetic_line_population(
@@ -89,4 +90,6 @@ class GeneticLineSearch(LineConverter):
                 insert_into_sorted_population(
                     population, fits, el, self.symbols, line, self.font)
             population = population[:self.pop_count]
-            yield symbols_id_arr_to_text_arr(population[0], self.symbols)
+            
+            self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in population[:4]]
+            yield self.current_candidates[0]

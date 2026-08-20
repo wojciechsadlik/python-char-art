@@ -66,6 +66,12 @@ class ParticleSwarmLineSearch(LineConverter):
         velocities = np.zeros(
             (self.pop_count, pos_len, num_symbols), dtype=np.float32)
 
+        sorted_indices = np.argsort(best_particle_pos_fit)[::-1]
+        self.current_candidates = [
+            symbols_id_arr_to_text_arr(best_particle_pos[idx].tolist(), self.symbols)
+            for idx in sorted_indices[:4]
+        ]
+
         yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)
 
         for gen in range(self.generations):
@@ -118,4 +124,10 @@ class ParticleSwarmLineSearch(LineConverter):
                         best_global_pos = copy.deepcopy(particles_np[i])
                         best_global_pos_fit = fits[i]
 
+            sorted_indices = np.argsort(best_particle_pos_fit)[::-1]
+            self.current_candidates = [
+                symbols_id_arr_to_text_arr(best_particle_pos[idx].tolist(), self.symbols)
+                for idx in sorted_indices[:4]
+            ]
+            
             yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)

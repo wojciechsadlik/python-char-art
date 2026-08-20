@@ -10,6 +10,7 @@ class RandomLineSearch(LineConverter):
             symbols: list[str],
             font: ImageFont.FreeTypeFont,
             generations: int = 100) -> None:
+        super().__init__()
         self.symbols = symbols
         self.font = font
         self.generations = generations
@@ -28,4 +29,5 @@ class RandomLineSearch(LineConverter):
                 best_fit = current_fit
                 best_symbols = current_symbols
 
+            self.current_candidates = [best_symbols]
             yield best_symbols

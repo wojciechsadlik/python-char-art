@@ -44,4 +44,6 @@ class GreedyLineSearch(LineConverter):
     def line2symbols_lazy(
         self, line: Image.Image, **kwargs
     ) -> Generator[list[str], None, None]:
-        yield generate_greedy_line(line, self.symbols, self.font)
+        res = generate_greedy_line(line, self.symbols, self.font)
+        self.current_candidates = [res]
+        yield res
