@@ -150,27 +150,26 @@ class ImgConverter:
 
                 for _ in range(gens_per_step):
                     try:
-                        prev_best = latest_image_state[i]
-                        
                         next(gen)
-                        
-                        candidates = converter.get_candidates()
-                        
-                        eval_candidates = [prev_best] if prev_best else []
-                        for c in candidates:
-                            if c not in eval_candidates:
-                                eval_candidates.append(c)
-                        
-                        if eval_candidates and len(eval_candidates) > 1:
-                            latest_image_state[i] = self._evaluate_candidates_globally(
-                                img, latest_image_state, i, eval_candidates
-                            )
-                        elif eval_candidates:
-                            latest_image_state[i] = eval_candidates[0]
-
                     except StopIteration:
                         active_mask[i] = False
                         break
+
+                prev_best = latest_image_state[i]
+                
+                candidates = converter.get_candidates()
+                
+                eval_candidates = [prev_best] if prev_best else []
+                for c in candidates:
+                    if c not in eval_candidates:
+                        eval_candidates.append(c)
+                
+                if eval_candidates and len(eval_candidates) > 1:
+                    latest_image_state[i] = self._evaluate_candidates_globally(
+                        img, latest_image_state, i, eval_candidates
+                    )
+                elif eval_candidates:
+                    latest_image_state[i] = eval_candidates[0]
 
             yield [list(line_res) for line_res in latest_image_state]
 
