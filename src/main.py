@@ -8,8 +8,10 @@ from converters.tile.bin_2d import Tile2Symb2dBin
 from converters.line_heuristics.harmony_search import HarmonyLineSearch
 from converters.img_converter import ImgConverter
 from diagnostics.artifact_manager import get_artifact_manager
+from rendering.ansi_colorizer import AnsiColorizer, colorize_symbols
 
-get_artifact_manager(debug=True)
+
+get_artifact_manager(debug=False)
 
 
 def main():
@@ -28,6 +30,7 @@ def main():
         default=string.ascii_letters + string.digits + string.punctuation + " ",
         help="Custom set of symbols to use"
     )
+    parser.add_argument("--colorize", action="store_true", help="Use ANSI to colorize")
     
     # Preprocessing options
     parser.add_argument("--contrast", type=float, default=1.0, help="Contrast factor")
@@ -63,7 +66,7 @@ def main():
         tile_converter=tile_converter
     )
 
-    img_converter = ImgConverter(converter=harmony_search)
+    img_converter = ImgConverter(converter=harmony_search, font=font)
 
     symbol_matrix = img_converter.img2symbols(
         prep_img,
@@ -72,6 +75,14 @@ def main():
         line_height=line_height,
         col_width=col_width
     )
+
+    if args.colorize:
+        ansi_colorizer = AnsiColorizer(
+            fg_brightness_scale=1.0,
+            bg_brightness_scale=0.8,
+            use_ansi_256_colors=False)
+        symbol_matrix = colorize_symbols(
+            prep_img, symbol_matrix, font, ansi_colorizer)
 
     text_output = "\n".join("".join(line) for line in symbol_matrix)
     print(text_output)
