@@ -180,6 +180,7 @@ class ImgConverter:
         col_width: Optional[int] = None,
         max_lines: Optional[int] = None,
         line_height: Optional[int] = None,
+        gens_per_step: Optional[int] = 5,
     ) -> list[list[str]]:
         final_result: list[list[str]] = []
         for frame in self.img2symbols_lazy(
@@ -188,6 +189,7 @@ class ImgConverter:
             col_width=col_width,
             max_lines=max_lines,
             line_height=line_height,
+            gens_per_step=gens_per_step
         ):
             final_result = frame
         return final_result
