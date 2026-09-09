@@ -1,7 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import repeat
 from multiprocessing import Pool, cpu_count
 import math
+from typing import Callable
 
 from PIL import Image as PILImage
 from PIL.Image import Resampling, Image
@@ -9,25 +10,21 @@ from PIL.ImageFont import truetype
 import numpy as np
 from sewar.full_ref import msssim
 
-from converters.tile.tile_converter import TileConverter
-from converters.line_heuristics.line_converter import LineConverter
 from converters.img_converter import ImgConverter
+from converters.line_heuristics.utils import get_char_width, get_line_height
 from image.processing import preprocess_img
 from rendering.image import render_symbols_img
 
 
-Converter = TileConverter | LineConverter
-
-
 @dataclass
 class Params:
-    converter_args: dict
-    preprocess_args: dict
     font_path: str
     font_size: int
-    win_width: int = None
-    max_width: int = None
-    max_height: int = None
+    max_cols: int
+    max_lines: int
+    gens_per_step: int = 1000
+    converter_args: dict = field(default_factory=dict)
+    preprocess_args: dict = field(default_factory=dict)
 
 
 def similarity(src_img: Image, res_img: Image):
@@ -50,8 +47,10 @@ def similarity(src_img: Image, res_img: Image):
     return np.real(msssim(src_img, res_img))
 
 
-def test_img(img_path: str, converter: Converter, params: Params) -> float:
+def test_img(img_path: str, converter: ImgConverter, params: Params) -> float:
     font = truetype(params.font_path, params.font_size)
+    line_height = int(params.font_size * 1.333)
+    col_width = int(line_height / 2)
 
     with PILImage.open(img_path) as src_img:
         src_img_loaded = src_img.copy()
@@ -60,27 +59,13 @@ def test_img(img_path: str, converter: Converter, params: Params) -> float:
                                   grayscale=True,
                                   **params.preprocess_args)
 
-        img_converter = ImgConverter(converter)
-
-        if isinstance(converter, LineConverter):
-            res_arr = img_converter.img2symbols(
-                prep_img,
-                max_cols=params.max_width,
-                max_lines=params.max_height)
-            res_img = render_symbols_img(res_arr, font, wh=prep_img.size)
-
-        elif isinstance(converter, TileConverter):
-            win_w = params.win_width
-            if not win_w and params.max_width:
-                win_w = math.ceil(params.max_width / prep_img.width)
-            win_h = win_w * 2
-
-            res_arr = img_converter.img2symbols(
-                prep_img,
-                win_wh=(win_w, win_h),
-                max_cols=params.max_width,
-                max_lines=params.max_height)
-            res_img = render_symbols_img(res_arr, font)
+        res_arr = converter.img2symbols(
+            prep_img,
+            max_cols=params.max_cols,
+            max_lines=params.max_lines,
+            col_width=col_width,
+            line_height=line_height)
+        res_img = render_symbols_img(res_arr, font)
 
         res_img = res_img.convert("L")
         return similarity(src_img_loaded, res_img)
@@ -88,7 +73,7 @@ def test_img(img_path: str, converter: Converter, params: Params) -> float:
 
 def test_converter_parallel(
         img_paths: list[str],
-        converter: Converter,
+        converter: ImgConverter,
         params: Params) -> list[float]:
     with Pool(cpu_count()) as p:
         sim_scores = p.starmap(
@@ -98,8 +83,10 @@ def test_converter_parallel(
     return sim_scores
 
 
-def test_loop(img_paths: list[str], make_converter: Converter,
-              params_space: list[Params]) -> list[list[float]]:
+def test_loop(img_paths: list[str],
+              make_converter: Callable[[Params], ImgConverter],
+              params_space: list[Params]
+              ) -> list[list[float]]:
     similarity_scores = []
     for params in params_space:
         converter = make_converter(params)
