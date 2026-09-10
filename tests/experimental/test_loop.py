@@ -6,7 +6,7 @@ from typing import Callable
 
 from PIL import Image as PILImage
 from PIL.Image import Resampling, Image
-from PIL.ImageFont import truetype
+from PIL.ImageFont import FreeTypeFont, truetype
 import numpy as np
 from sewar.full_ref import msssim
 
@@ -94,6 +94,46 @@ def test_loop(img_paths: list[str],
 
         print(f"Min: {min(results):.4f} | Max: {max(results):.4f} | "
               f"Mean: {np.mean(results):.4f} | Std: {np.std(results):.4f}")
+        similarity_scores.append(results)
+
+    return similarity_scores
+
+
+def lazy_converter_loop(img_paths: list[str],
+                        converter: ImgConverter,
+                        font: FreeTypeFont,
+                        max_cols: int,
+                        max_lines: int,
+                        col_width: int,
+                        line_height: int,
+                        gens: int,
+                        gens_per_step: int) -> list[list[float]]:
+    similarity_scores = []
+    img_generators = []
+    for img_path in img_paths:
+        img = PILImage.open(img_path).convert("L")
+        img_generators.append((
+            img,
+            converter.img2symbols_lazy(img,
+                                        max_cols=max_cols,
+                                        max_lines=max_lines,
+                                        col_width=col_width,
+                                        line_height=line_height,
+                                        gens_per_step=gens_per_step)))
+
+    for _ in range(gens // gens_per_step):
+        results = []
+        for img, generator in img_generators:
+            try:
+                res_arr = next(generator)
+            except StopIteration:
+                break
+            res_img = render_symbols_img(res_arr, font)
+            results.append(similarity(img, res_img))
+        if not results:
+            break
+        print(f"Min: {min(results):.4f} | Max: {max(results):.4f} | "
+            f"Mean: {np.mean(results):.4f} | Std: {np.std(results):.4f}")
         similarity_scores.append(results)
 
     return similarity_scores
