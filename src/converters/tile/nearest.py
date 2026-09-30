@@ -7,9 +7,10 @@ from converters.tile.tile_converter import TileConverter
 from palette.symbol2value import make_symbol2value_map
 
 
-def nearest(tile: np.ndarray, val: np.ndarray):
-    dist = np.mean((tile - val) ** 2)
+def nearest_mae(tile: np.ndarray, val: np.ndarray):
+    dist = np.mean(np.abs(tile - val))
     return np.exp(-dist)
+
 
 
 class Tile2SymbNearest(TileConverter):
@@ -19,7 +20,7 @@ class Tile2SymbNearest(TileConverter):
                  val_wh=(3, 6),
                  bg_color=0,
                  fg_color=255,
-                 metrics=nearest):
+                 metrics=nearest_mae):
         self.symbol2value = make_symbol2value_map(
             symbols=symbols,
             font=font,

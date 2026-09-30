@@ -64,22 +64,23 @@ class ImgConverter:
         self,
         img: Image.Image,
         current_state: list[list[str]],
+        current_bst_fit: float,
         line_idx: int,
         candidates: list[list[str]]
-    ) -> list[str]:
+    ) -> tuple[list[str], float]:
         bst_candidate = current_state[line_idx]
-        bst_fit = float("-inf")
+        bst_fit = current_bst_fit
         test_state = deepcopy(current_state)
 
         for candidate in candidates:
             test_state[line_idx] = candidate
             rend_test = render_symbols_img(test_state, self.font, wh=img.size)
-            fit = img_similarity(img, rend_test)
+            fit = img_similarity(img, rend_test, blur=True)
             if fit > bst_fit:
                 bst_candidate = candidate
                 bst_fit = fit
 
-        return bst_candidate
+        return bst_candidate, bst_fit
 
     def _initialize_line_streams(
         self,
@@ -128,18 +129,21 @@ class ImgConverter:
             line_height=line_height
         )
 
-        lines, line_converters, line_gens, latest_image_state, active_mask = self._initialize_line_streams(
+        lines, line_converters, line_gens, bst_image_state, active_mask = self._initialize_line_streams(
             img, col_width, line_height
         )
 
         for i, gen in enumerate(line_gens):
             get_artifact_manager().set_line(i, src_line=lines[i])
             try:
-                latest_image_state[i] = next(gen)
+                bst_image_state[i] = next(gen)
             except StopIteration:
                 active_mask[i] = False
 
-        yield [list(line_res) for line_res in latest_image_state]
+        rend_test = render_symbols_img(bst_image_state, self.font, wh=img.size)
+        bst_fit = img_similarity(img, rend_test, blur=True)
+
+        yield [list(line_res) for line_res in bst_image_state]
 
         while any(active_mask):
             for i, (gen, converter) in enumerate(zip(line_gens, line_converters)):
@@ -154,24 +158,20 @@ class ImgConverter:
                     except StopIteration:
                         active_mask[i] = False
                         break
-
-                prev_best = latest_image_state[i]
                 
                 candidates = converter.get_candidates()
                 
-                eval_candidates = [prev_best] if prev_best else []
+                eval_candidates = [bst_image_state[i]]
                 for c in candidates:
                     if c not in eval_candidates:
                         eval_candidates.append(c)
                 
                 if eval_candidates and len(eval_candidates) > 1:
-                    latest_image_state[i] = self._evaluate_candidates_globally(
-                        img, latest_image_state, i, eval_candidates
+                    bst_image_state[i], bst_fit = self._evaluate_candidates_globally(
+                        img, bst_image_state, bst_fit, i, eval_candidates,
                     )
-                elif eval_candidates:
-                    latest_image_state[i] = eval_candidates[0]
 
-            yield [list(line_res) for line_res in latest_image_state]
+            yield [list(line_res) for line_res in bst_image_state]
 
     def img2symbols(
         self,

@@ -69,7 +69,7 @@ class ParticleSwarmLineSearch(LineConverter):
         sorted_indices = np.argsort(best_particle_pos_fit)[::-1]
         self.current_candidates = [
             symbols_id_arr_to_text_arr(best_particle_pos[idx].tolist(), self.symbols)
-            for idx in sorted_indices[:4]
+            for idx in sorted_indices[:2]
         ]
 
         yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)
@@ -127,7 +127,7 @@ class ParticleSwarmLineSearch(LineConverter):
             sorted_indices = np.argsort(best_particle_pos_fit)[::-1]
             self.current_candidates = [
                 symbols_id_arr_to_text_arr(best_particle_pos[idx].tolist(), self.symbols)
-                for idx in sorted_indices[:4]
+                for idx in sorted_indices[:2]
             ]
             
             yield symbols_id_arr_to_text_arr(best_global_pos.tolist(), self.symbols)

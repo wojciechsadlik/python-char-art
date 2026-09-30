@@ -11,7 +11,7 @@ import numpy as np
 from sewar.full_ref import msssim
 
 from converters.img_converter import ImgConverter
-from converters.line_heuristics.utils import get_char_width, get_line_height
+from converters.evaluation import img_similarity
 from image.processing import preprocess_img
 from rendering.image import render_symbols_img
 
@@ -25,26 +25,6 @@ class Params:
     gens_per_step: int = 1000
     converter_args: dict = field(default_factory=dict)
     preprocess_args: dict = field(default_factory=dict)
-
-
-def similarity(src_img: Image, res_img: Image):
-    target_size = (min(src_img.width, res_img.width),
-                   min(src_img.height, res_img.height))
-    min_dim = min(target_size)
-    if min_dim < 176:
-        scale = 176 / min_dim
-        target_size = (int(target_size[0] * scale),
-                       int(target_size[1] * scale))
-
-    if src_img.size != target_size:
-        src_img = src_img.resize(target_size, Resampling.BICUBIC)
-
-    if res_img.size != target_size:
-        res_img = res_img.resize(target_size, Resampling.BICUBIC)
-
-    src_img = np.array(src_img.convert("L"))
-    res_img = np.array(res_img.convert("L"))
-    return np.real(msssim(src_img, res_img))
 
 
 def test_img(img_path: str, converter: ImgConverter, params: Params) -> float:
@@ -68,7 +48,7 @@ def test_img(img_path: str, converter: ImgConverter, params: Params) -> float:
         res_img = render_symbols_img(res_arr, font)
 
         res_img = res_img.convert("L")
-        return similarity(src_img_loaded, res_img)
+        return img_similarity(src_img_loaded, res_img, blur=False)
 
 
 def test_converter_parallel(
@@ -129,7 +109,7 @@ def lazy_converter_loop(img_paths: list[str],
             except StopIteration:
                 break
             res_img = render_symbols_img(res_arr, font)
-            results.append(similarity(img, res_img))
+            results.append(img_similarity(img, res_img, blur=False))
         if not results:
             break
         print(f"Min: {min(results):.4f} | Max: {max(results):.4f} | "

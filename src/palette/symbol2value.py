@@ -5,9 +5,19 @@ import random
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
+from sklearn.preprocessing import QuantileTransformer
 
 from rendering.ansi_colors_parser import strip_ansi_codes, parse_ansi_colors
 from rendering.ansi_colorizer import reset_code, set_char_fg_256_color_code, set_char_bg_256_color_code
+
+
+PALETTES = {
+    'asciis': list(filter(lambda a: a.isprintable(), string.printable)),
+    'minimal': ['@', '+', ' '],
+    'minimal-diverse': ['@', '+', '\'', '.', ' '],  # includes ' and .
+    'line-asciis': ['|', '<', '>', '+', '=', '-', '/', '\\', '_', ' '],
+    'extended-asciis': bytes(range(32, 256)).decode('cp437')
+}
 
 
 def get_asciis():
@@ -88,9 +98,19 @@ def add_ansi_256_colors(symbols):
 
 
 def normalize_values(colors: list[np.ndarray]):
-    max_vals = np.max(np.array(colors), axis=0)
-    max_vals = np.clip(max_vals, 0.001, 1.0)
-    return [b / max_vals for b in colors]
+    flat_all = np.concatenate([arr.ravel() for arr in colors]).reshape(-1, 1)
+
+    qt = QuantileTransformer(
+        output_distribution='uniform', n_quantiles=len(colors))
+    transformed_flat = qt.fit_transform(flat_all).ravel()
+
+    sizes = [arr.size for arr in colors]
+    split_indices = np.cumsum(sizes)[:-1]
+
+    return [
+        chunk.reshape(arr.shape)
+        for chunk, arr in zip(np.split(transformed_flat, split_indices), colors)
+    ]
 
 
 def make_symbol2value_map(
@@ -108,6 +128,10 @@ def make_symbol2value_map(
         sym = strip_ansi_codes(sym)
         width = max(width, font.getbbox(sym)[2])
         height = max(height, font.getbbox(sym)[3])
+
+    # adding some margin
+    width += 2
+    height += 2
 
     colors = []
     for sym in symbols:
@@ -130,7 +154,7 @@ def make_symbol2value_map(
             fill=sym_info["fg_color"],
             anchor='mm')
 
-        img = img.filter(ImageFilter.BoxBlur(radius=2))
+        img = img.filter(ImageFilter.GaussianBlur(radius=2))
 
         if grayscale:
             img = img.convert("L")
@@ -185,4 +209,3 @@ def symbols_sorted(symbols, font):
     symb_brs = [(s, b[0][0]) for s, b in symbol2brightness.items()]
     symb_brs = sorted(symb_brs, key=lambda s_b: s_b[1])
     return list(map(lambda s_b: s_b[0], symb_brs))
-

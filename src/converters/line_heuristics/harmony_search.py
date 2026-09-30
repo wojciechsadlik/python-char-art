@@ -68,7 +68,7 @@ class HarmonyLineSearch(LineConverter):
             col_width=col_width,
         )
 
-        self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in self.population[:4]]
+        self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in self.population[:2]]
         yield self.current_candidates[0]
 
         for gen in range(self.generations):
@@ -84,5 +84,5 @@ class HarmonyLineSearch(LineConverter):
                     self.population, self.fits, new_harm, self.symbols, line, self.font
                 )
 
-            self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in self.population[:4]]
+            self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in self.population[:2]]
             yield self.current_candidates[0]
