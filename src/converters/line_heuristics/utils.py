@@ -22,11 +22,13 @@ def get_line_height(symbols: list[str], font: ImageFont.FreeTypeFont) -> int:
     return bbox[3] - bbox[1]
 
 
-def get_char_width(font: ImageFont.FreeTypeFont) -> float:
+def get_char_width(symbols: list[str], font: ImageFont.FreeTypeFont) -> float:
+    if not symbols:
+        return 0.0
     img = Image.new("L", (1, 1))
     draw = ImageDraw.Draw(img)
-    bbox = draw.textbbox((0, 0), "M", font=font)
-    return bbox[2] - bbox[0]
+    bbox = draw.textbbox((0, 0), "".join(symbols), font=font)
+    return (bbox[2] - bbox[0]) / len(symbols)
 
 
 def new_img_draw(size: tuple[int, int], fill: int = 0) -> tuple[Image.Image, ImageDraw.ImageDraw]:
@@ -49,15 +51,12 @@ def draw_text_arr(
     img_draw.multiline_text((0, 0), "".join(text_arr), font=font, fill=255)
 
 
-
-
 def evaluate_symbol_arr(
     src_img: Image.Image,
     symbol_arr: list[list[str]],
     font: ImageFont.FreeTypeFont,
-    wh,
 ) -> float:
-    res_img = render_symbols_img(symbol_arr, font, wh=wh)
+    res_img = render_symbols_img(symbol_arr, font)
     return line_similarity(src_img, res_img)
 
 
@@ -68,7 +67,7 @@ def evaluate_symbols_id_arr(
     font: ImageFont.FreeTypeFont,
 ) -> float:
     symbol_arr = symbols_id_arr_to_text_arr(p_id_arr, symbols)
-    return evaluate_symbol_arr(src_img, [symbol_arr], font, src_img.size)
+    return evaluate_symbol_arr(src_img, [symbol_arr], font)
 
 
 def evaluate_symbols_id_population(
@@ -78,21 +77,6 @@ def evaluate_symbols_id_population(
     font: ImageFont.FreeTypeFont,
 ) -> list[float]:
     return [evaluate_symbols_id_arr(el, symbols, img, font) for el in population]
-
-
-def align_population_lengths(
-    population: list[list[int]],
-    length: int,
-    symbols_length: int = 1,
-    fill_id: Optional[int] = None,
-) -> None:
-    logger.debug("Aligning population from length %d to target length %d", len(population[0]), length)
-    for i in range(len(population)):
-        while len(population[i]) < length:
-            if fill_id is not None:
-                population[i].append(fill_id)
-            else:
-                population[i].append(random.randrange(0, symbols_length))
 
 
 def sort_population(
@@ -109,7 +93,6 @@ def sort_population(
     sorted_pop = [x[1] for x in sorted_population]
 
     best_line = symbols_id_arr_to_text_arr(sorted_pop[0], symbols)
-    logger.debug("Initial Best Fitness: %.4f | Line: %s", sorted_fits[0], "".join(best_line))
 
     get_artifact_manager().save_line(
         symbol_line=best_line,
@@ -134,7 +117,6 @@ def insert_into_sorted_population(
         if new_fit > f:
             if i == 0:
                 line = symbols_id_arr_to_text_arr(new_el, symbols)
-                logger.debug("New Best: Fitness %.4f | Line: %s", new_fit, "".join(line))
 
                 get_artifact_manager().save_line(
                     symbol_line=line,
@@ -150,42 +132,18 @@ def insert_into_sorted_population(
             return
 
 
-def calculate_longest_individual(
-    img: Image.Image, symbols: list[str], font: ImageFont.FreeTypeFont
-) -> int:
-    img_draw = ImageDraw.Draw(img)
-    min_p_width = math.inf
-    for p in symbols:
-        bbox = img_draw.textbbox((0, 0), p, font=font)
-        if bbox[2] < min_p_width:
-            min_p_width = bbox[2]
-    return int(math.floor(img.size[0] / min_p_width))
-
-
 def generate_tile_line(
     line: Image.Image,
     tile_converter: TileConverter,
-    col_width: Optional[int] = None,
+    max_cols: int,
 ) -> list[str]:
-    col_width = col_width or line.height // 2
     line_arr = np.array(line)
-    tile_arrs = slice_horizontally(line_arr, col_width)
+    tile_arrs = slice_horizontally(line_arr, max_cols)
     return [tile_converter.tile2symbol(tile) for tile in tile_arrs]
 
 
-def generate_random_line(
-    line: Image.Image, symbols: list[str], font: ImageFont.FreeTypeFont
-) -> list[str]:
-    line_size = line.size
-    _, text_draw = new_img_draw(line.size)
-    text_arr: list[str] = []
-    bbox = text_draw.textbbox((0, 0), "".join(text_arr), font=font)
-    while bbox[2] < line_size[0] + 4:
-        text_arr.append(symbols[random.randrange(0, len(symbols))])
-        bbox = text_draw.textbbox((0, 0), "".join(text_arr), font=font)
-    if text_arr:
-        text_arr.pop()
-    return text_arr
+def generate_random_line(symbols: list[str], max_cols: int) -> list[str]:
+    return [random.choice(symbols) for _ in range(max_cols)]
 
 
 def generate_line_population(
@@ -193,9 +151,9 @@ def generate_line_population(
     symbols: list[str],
     font: ImageFont.FreeTypeFont,
     count: int,
+    max_cols: int,
     include_greedy: bool = False,
     tile_converter: Optional[TileConverter] = None,
-    col_width: Optional[int] = None,
 ) -> tuple[list[list[int]], list[float]]:
     population: list[list[int]] = []
 
@@ -210,19 +168,14 @@ def generate_line_population(
         if tile_converter is not None:
             population.append(
                 text_arr_to_symbols_id_arr(
-                    generate_tile_line(line, tile_converter, col_width), symbols
+                    generate_tile_line(line, tile_converter, max_cols), symbols
                 )
             )
         else:
             population.append(
                 text_arr_to_symbols_id_arr(
-                    generate_random_line(line, symbols, font), symbols)
+                    generate_random_line(symbols, max_cols), symbols)
             )
 
-    align_population_lengths(
-        population,
-        calculate_longest_individual(line, symbols, font),
-        symbols_length=len(symbols),
-    )
     population, fits = sort_population(population, symbols, line, font)
     return population, fits

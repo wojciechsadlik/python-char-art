@@ -100,8 +100,9 @@ def add_ansi_256_colors(symbols):
 def normalize_values(colors: list[np.ndarray]):
     flat_all = np.concatenate([arr.ravel() for arr in colors]).reshape(-1, 1)
 
-    qt = QuantileTransformer(
-        output_distribution='uniform', n_quantiles=len(colors))
+    qt = QuantileTransformer(output_distribution='uniform',
+                             n_quantiles=len(colors),
+                             subsample=len(colors))
     transformed_flat = qt.fit_transform(flat_all).ravel()
 
     sizes = [arr.size for arr in colors]

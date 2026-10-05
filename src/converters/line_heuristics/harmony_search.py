@@ -57,15 +57,15 @@ class HarmonyLineSearch(LineConverter):
                 new_harm.append(random.randrange(0, len(symbols)))
         return new_harm
 
-    def line2symbols_lazy(self, line: Image.Image, col_width: Optional[int] = None, **kwargs) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(self, line: Image.Image, max_cols: int, **kwargs) -> Generator[list[str], None, None]:
         self.population, self.fits = generate_line_population(
             line,
             self.symbols,
             self.font,
             self.pop_count,
+            max_cols=max_cols,
             include_greedy=self.include_greedy,
             tile_converter=self.tile_converter,
-            col_width=col_width,
         )
 
         self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in self.population[:2]]
@@ -73,8 +73,6 @@ class HarmonyLineSearch(LineConverter):
 
         for gen in range(self.generations):
             get_artifact_manager().current_gen = gen
-
-            logger.info("Generation %d/%d", gen + 1, self.generations)
 
             for _ in range(self.pop_count):
                 new_harm = self.new_harmony_line(

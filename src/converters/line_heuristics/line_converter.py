@@ -19,21 +19,20 @@ class LineConverter:
 
     def tile_line(self,
                   line: Image.Image,
-                  col_width: Optional[int] = None
+                  max_cols: int
                   ) -> list[str]:
         if self.tile_converter is None:
             raise ValueError("No TileConverter assigned to LineConverter.")
-        col_width = col_width or line.height // 2
         line_arr = np.array(line)
-        tile_arrs = slice_horizontally(line_arr, col_width)
+        tile_arrs = slice_horizontally(line_arr, max_cols)
         return [self.tile_converter.tile2symbol(tile) for tile in tile_arrs]
 
     def line2symbols_lazy(self,
                           line: Image.Image,
-                          col_width: Optional[int] = None
+                          max_cols: int
                           ) -> Generator[list[str], None, None]:
         if self.tile_converter is not None:
-            res = self.tile_line(line, col_width=col_width)
+            res = self.tile_line(line, max_cols=max_cols)
             self.current_candidates = [res]
             yield res
         else:
@@ -43,9 +42,9 @@ class LineConverter:
 
     def line2symbols(self, 
                      line: Image.Image,
-                     col_width: Optional[int] = None
+                     max_cols: int
                      ) -> list[str]:
         best_symbols: list[str] = []
-        for symbols in self.line2symbols_lazy(line, col_width=col_width):
+        for symbols in self.line2symbols_lazy(line, max_cols=max_cols):
             best_symbols = symbols
         return best_symbols

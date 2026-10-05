@@ -1,9 +1,11 @@
+import math
 from collections.abc import Callable
 import numpy as np
 
 
-def slice_vertically(img_arr: np.ndarray, height: int) -> list[np.ndarray]:
+def slice_vertically(img_arr: np.ndarray, lines: int) -> list[np.ndarray]:
     img_height = img_arr.shape[0]
+    height = math.ceil(img_height / lines)
 
     if (remainder := img_height % height) != 0:
         pad_h = height - remainder
@@ -16,8 +18,9 @@ def slice_vertically(img_arr: np.ndarray, height: int) -> list[np.ndarray]:
     return [img_arr[y: y + height] for y in range(0, img_arr.shape[0], height)]
 
 
-def slice_horizontally(img_arr: np.ndarray, width: int) -> list[np.ndarray]:
+def slice_horizontally(img_arr: np.ndarray, cols: int) -> list[np.ndarray]:
     img_width = img_arr.shape[1]
+    width = math.ceil(img_width / cols)
 
     if (remainder := img_width % width) != 0:
         pad_w = width - remainder
@@ -27,14 +30,13 @@ def slice_horizontally(img_arr: np.ndarray, width: int) -> list[np.ndarray]:
             pad_shape,
             constant_values=0)
 
-    return [img_arr[:, x: x + width]
-            for x in range(0, img_arr.shape[1], width)]
+    return [img_arr[:, x: x + width] for x in range(0, img_arr.shape[1], width)]
 
 
-def map_img_arr[T](img_arr: np.ndarray, width: int, height: int,
+def map_img_arr[T](img_arr: np.ndarray, cols: int, lines: int,
                    callback: Callable[[np.ndarray], T]) -> list[list[T]]:
     res = []
-    for row in slice_vertically(img_arr, height):
-        res_row = [callback(tile) for tile in slice_horizontally(row, width)]
+    for row in slice_vertically(img_arr, lines):
+        res_row = [callback(tile) for tile in slice_horizontally(row, cols)]
         res.append(res_row)
     return res
