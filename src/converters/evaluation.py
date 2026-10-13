@@ -9,7 +9,7 @@ def mae(a, b):
     return np.mean(np.abs(a - b))
 
 
-def normalize_size(src_img, res_img, min_dim=float('inf')):
+def normalize_size(src_img, res_img, min_dim=1):
     target_size = (min(src_img.width, res_img.width),
                    min(src_img.height, res_img.height))
 
@@ -73,9 +73,11 @@ def img_similarity(src_img: Image, res_img: Image, blur: bool = False) -> float:
 
 
 def line_similarity(src_img: Image, res_img: Image) -> float:
-    src_img, res_img = normalize_size(src_img, res_img, min_dim=176)
+    src_img, res_img = normalize_size(src_img, res_img, min_dim=11)
     src_arr = np.array(src_img.convert("L"))
     res_arr = np.array(res_img.convert("L"))
+    corr = np.nan_to_num(np.corrcoef(src_arr.ravel(), res_arr.ravel())[0, 1],
+                         nan=0.0)
     return (0.3 * ssim(src_arr, res_arr)[0] +
-            0.6 * np.mean(match_template(src_arr, res_arr)) +
+            0.6 * corr +
             0.1 * (1 - mae(src_arr / 255, res_arr / 255)))

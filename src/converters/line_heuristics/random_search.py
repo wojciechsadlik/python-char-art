@@ -15,15 +15,17 @@ class RandomLineSearch(LineConverter):
         self.font = font
         self.generations = generations
 
-    def line2symbols_lazy(self, line: Image.Image, **kwargs) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(
+            self, line: Image.Image, max_cols: int, **kwargs
+        ) -> Generator[list[str], None, None]:
         best_fit = -float('inf')
         best_symbols: list[str] = []
 
         for _ in range(self.generations):
             current_symbols = generate_random_line(
-                line, self.symbols, self.font)
+                self.symbols, max_cols)
             current_fit = evaluate_symbol_arr(
-                line, [current_symbols], self.font, line.size)
+                line, [current_symbols], self.font)
 
             if current_fit > best_fit:
                 best_fit = current_fit

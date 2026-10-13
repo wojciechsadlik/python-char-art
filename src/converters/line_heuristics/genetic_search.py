@@ -69,7 +69,8 @@ class GeneticLineSearch(LineConverter):
             new_population.append(new2)
         return new_population
 
-    def line2symbols_lazy(self, line: Image.Image, col_width: Optional[int] = None, **kwargs) -> Generator[list[str], None, None]:
+    def line2symbols_lazy(self, line: Image.Image, 
+                          max_cols: int, **kwargs) -> Generator[list[str], None, None]:
         population, fits = generate_line_population(
             line,
             self.symbols,
@@ -77,7 +78,7 @@ class GeneticLineSearch(LineConverter):
             self.pop_count,
             include_greedy=self.include_greedy,
             tile_converter=self.tile_converter,
-            col_width=col_width,
+            max_cols=max_cols,
         )
 
         self.current_candidates = [symbols_id_arr_to_text_arr(p, self.symbols) for p in population[:2]]

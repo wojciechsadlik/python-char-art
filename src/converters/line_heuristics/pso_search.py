@@ -42,7 +42,7 @@ class ParticleSwarmLineSearch(LineConverter):
 
     def line2symbols_lazy(self,
                           line: Image.Image,
-                          col_width: Optional[int] = None,
+                          max_cols: int,
                           **kwarg
                           ) -> Generator[list[str], None, None]:
         particles, fits = generate_line_population(
@@ -50,9 +50,9 @@ class ParticleSwarmLineSearch(LineConverter):
             self.symbols,
             self.font,
             self.pop_count,
+            max_cols=max_cols,
             include_greedy=self.include_greedy,
             tile_converter=self.tile_converter,
-            col_width=col_width,
         )
         particles_np = np.array(particles, dtype=np.int32)
         pos_len = len(particles_np[0])
