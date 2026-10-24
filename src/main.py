@@ -1,10 +1,9 @@
 import argparse
-import string
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont
 
-from converters.line_heuristics.utils import get_char_width, get_line_height
 from image.processing import preprocess_img, DITHER_MODES
-from converters.tile.bin_2d import Tile2Symb2dBin
+from palette.symbol2value import PALETTES, stream_width_aligned_permutations
+from converters.tile.nearest import Tile2SymbNearest
 from converters.line_heuristics.harmony_search import HarmonyLineSearch
 from converters.img_converter import ImgConverter
 from diagnostics.artifact_manager import get_artifact_manager
@@ -18,29 +17,44 @@ def main():
     parser = argparse.ArgumentParser(
         description="Preprocess an image into grayscale and convert it to symbol art."
     )
-    parser.add_argument("-i", "--input", required=True, help="Path to input image file")
-    parser.add_argument("-c", "--cols", type=int, default=80, help="Maximum output columns (width)")
-    parser.add_argument("-l", "--lines", type=int, default=40, help="Maximum output lines (height)")
-    parser.add_argument("-f", "--font-path", required=True, help="Path to TTF monospaced font")
-    parser.add_argument("-s", "--font-size", type=int, default=16, help="Monospaced font size in px")
-    parser.add_argument("-g", "--generations", type=int, default=50, help="Harmony Search generations per line")
-    parser.add_argument(
-        "--symbols",
-        type=str,
-        default=string.ascii_letters + string.digits + string.punctuation + " ",
-        help="Custom set of symbols to use"
-    )
-    parser.add_argument("--colorize", action="store_true", help="Use ANSI to colorize")
-    
+    parser.add_argument("-i", "--input", required=True,
+                        help="Path to input image file")
+    parser.add_argument("-c", "--cols", type=int, default=80,
+                        help="Maximum output columns (width)")
+    parser.add_argument("-l", "--lines", type=int, default=24,
+                        help="Maximum output lines (height)")
+    parser.add_argument("-f", "--font-path", required=True,
+                        help="Path to TTF font")
+    parser.add_argument("-s", "--font-size", type=int,
+                        default=16, help="Font size in px")
+    parser.add_argument("-g", "--generations", type=int,
+                        default=50, help="Harmony Search generations per line")
+    parser.add_argument("--symbols", type=str,
+                        default=PALETTES['asciis'], help="Custom set of symbols to use")
+    parser.add_argument("--non-mono", action="store_true",
+                        help="Use when using a non monospaced font")
+
+    # Colorization Flags
+    parser.add_argument("--colorize", action="store_true",
+                        help="Use ANSI to colorize")
+    parser.add_argument("--ansi-256", action="store_true",
+                        help="Use ANSI 256 colors instead of standard 8/16 palette")
+
     # Preprocessing options
-    parser.add_argument("--contrast", type=float, default=1.0, help="Contrast factor")
-    parser.add_argument("--quantize-colors", type=int, default=256, help="Number of color quantization levels")
-    parser.add_argument("--enhance-edges", type=float, default=0.0, help="Edge enhancement blend factor (0.0 to 1.0)")
-    parser.add_argument("--find-edges", type=float, default=0.0, help="Find edges blend factor (0.0 to 1.0)")
+    parser.add_argument("--contrast", type=float,
+                        default=1.0, help="Contrast factor")
+    parser.add_argument("--quantize-colors", type=int,
+                        default=256, help="Number of color quantization levels")
+    parser.add_argument("--enhance-edges", type=float, default=0.0,
+                        help="Edge enhancement blend factor (0.0 to 1.0)")
+    parser.add_argument("--find-edges", type=float, default=0.0,
+                        help="Find edges blend factor (0.0 to 1.0)")
+    parser.add_argument("--invert", action="store_true",
+                        help="Invert colors")
 
     args = parser.parse_args()
 
-    img = Image.open(args.input)
+    img = Image.open(args.input).convert("RGB")
     symbols = list(args.symbols)
     font = ImageFont.truetype(args.font_path, args.font_size)
 
@@ -51,18 +65,22 @@ def main():
         quantize_colors=args.quantize_colors,
         dither=DITHER_MODES.FS,
         enhance_edges=args.enhance_edges,
-        find_edges=args.find_edges
+        find_edges=args.find_edges,
+        invert=args.invert
     )
 
-    line_height = get_line_height(symbols, font)
-    col_width = get_char_width(font)
-    tile_converter = Tile2Symb2dBin(symbols=symbols, font=font)
+    if args.non_mono:
+        symbols = list(stream_width_aligned_permutations(symbols, font))
+
+    tile_converter = Tile2SymbNearest(symbols=symbols,
+                                      font=font,
+                                      val_wh=(3, 6) if not args.non_mono else (6, 6))
 
     harmony_search = HarmonyLineSearch(
         symbols=symbols,
         font=font,
         generations=args.generations,
-        pop_count=20,
+        pop_count=5,
         tile_converter=tile_converter
     )
 
@@ -71,16 +89,14 @@ def main():
     symbol_matrix = img_converter.img2symbols(
         prep_img,
         max_cols=args.cols,
-        max_lines=args.lines,
-        line_height=line_height,
-        col_width=col_width
+        max_lines=args.lines
     )
 
     if args.colorize:
         ansi_colorizer = AnsiColorizer(
             fg_brightness_scale=1.0,
             bg_brightness_scale=0.8,
-            use_ansi_256_colors=False)
+            use_ansi_256_colors=args.ansi_256)
         symbol_matrix = colorize_symbols(
             prep_img, symbol_matrix, font, ansi_colorizer)
 

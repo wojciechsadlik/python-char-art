@@ -22,13 +22,13 @@ def get_line_height(symbols: list[str], font: ImageFont.FreeTypeFont) -> int:
     return bbox[3] - bbox[1]
 
 
-def get_char_width(symbols: list[str], font: ImageFont.FreeTypeFont) -> float:
+def get_char_width(symbols: list[str], font: ImageFont.FreeTypeFont) -> int:
     if not symbols:
         return 0.0
     img = Image.new("L", (1, 1))
     draw = ImageDraw.Draw(img)
     bbox = draw.textbbox((0, 0), "".join(symbols), font=font)
-    return (bbox[2] - bbox[0]) / len(symbols)
+    return int((bbox[2] - bbox[0]) / len(symbols))
 
 
 def new_img_draw(size: tuple[int, int], fill: int = 0) -> tuple[Image.Image, ImageDraw.ImageDraw]:

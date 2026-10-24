@@ -146,7 +146,10 @@ def preprocess_img(img: Image.Image,
                    sharpness=1.0,
                    enhance_edges=0.0,
                    find_edges=0.0,
-                   grayscale=True):
+                   grayscale=True,
+                   invert=False):
+    if invert:
+        img = ImageOps.invert(img)
     img = ImageOps.scale(img, scale_factor, Image.Resampling.BICUBIC)
     img = ImageEnhance.Contrast(img).enhance(contrast)
     img = ImageEnhance.Brightness(img).enhance(brightness)

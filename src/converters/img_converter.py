@@ -88,9 +88,6 @@ class ImgConverter:
         symbols = getattr(self.converter, "symbols", None)
         if not symbols and getattr(self.converter, "tile_converter", None):
             symbols = getattr(self.converter.tile_converter, "symbols", None)
-            
-        if not symbols:
-            symbols = ["M", "g", "@", "l"]
 
         char_w = get_char_width(symbols, self.font)
         char_h = get_line_height(symbols, self.font)
@@ -104,6 +101,9 @@ class ImgConverter:
         else:
             cols = max(1, int(max_lines * target_ratio))
             lines = max_lines
+
+        if img.size[0] < cols * char_w or img.size[1] < lines * char_h:
+            img = img.resize((cols * char_w, lines * char_h))
 
         lines_img, line_converters, line_gens, bst_image_state, active_mask = self._initialize_line_streams(
             img, cols, lines

@@ -25,7 +25,7 @@ class HarmonyLineSearch(LineConverter):
             pop_count: int = 10,
             mem_rate: float = 0.9,
             pa_rate: float = 0.1,
-            pa: Optional[int] = None,
+            pa_std: Optional[int] = None,
             include_greedy: bool = False,
             tile_converter: Optional[TileConverter] = None) -> None:
         super().__init__(tile_converter=tile_converter)
@@ -35,7 +35,7 @@ class HarmonyLineSearch(LineConverter):
         self.pop_count = pop_count
         self.mem_rate = mem_rate
         self.pa_rate = pa_rate
-        self.pa = pa if pa is not None else max(len(symbols) // 8, 2)
+        self.pa_std = pa_std if pa_std is not None else len(symbols) / 4
         self.include_greedy = include_greedy
 
     @staticmethod
@@ -43,15 +43,16 @@ class HarmonyLineSearch(LineConverter):
                          population: list[list[int]],
                          mem_rate: float = 0.8,
                          pa_rate: float = 0.3,
-                         pa: int = 2) -> list[int]:
+                         pa_std: int = 2) -> list[int]:
         new_harm: list[int] = []
         while len(new_harm) < len(population[0]):
             if random.random() < mem_rate:
                 new_pitch = random.choices(population, weights=range(
                     len(population), 0, -1))[0][len(new_harm)]
                 if random.random() < pa_rate:
-                    new_pitch += random.randint(-pa, pa)
-                    new_pitch = new_pitch % len(symbols)
+                    new_pitch = max(0,
+                                    min(len(symbols) - 1,
+                                        int(random.gauss(new_pitch, pa_std))))
                 new_harm.append(new_pitch)
             else:
                 new_harm.append(random.randrange(0, len(symbols)))
@@ -76,7 +77,7 @@ class HarmonyLineSearch(LineConverter):
 
             for _ in range(self.pop_count):
                 new_harm = self.new_harmony_line(
-                    self.symbols, self.population, self.mem_rate, self.pa_rate, self.pa
+                    self.symbols, self.population, self.mem_rate, self.pa_rate, self.pa_std
                 )
                 insert_into_sorted_population(
                     self.population, self.fits, new_harm, self.symbols, line, self.font

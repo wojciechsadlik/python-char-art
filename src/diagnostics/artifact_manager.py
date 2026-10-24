@@ -54,7 +54,7 @@ class ArtifactManager:
         line_dir = self.run_dir / f"line_{self.current_line:03d}"
         line_dir.mkdir(exist_ok=True)
 
-        res_img = render_symbols_img([symbol_line], font, wh=size)
+        res_img = render_symbols_img([symbol_line], font)
 
         filename = f"gen_{self.current_gen:04d}_fit_{fitness:.4f}.png"
         filepath = line_dir / filename
